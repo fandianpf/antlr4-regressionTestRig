@@ -1,0 +1,101 @@
+// Gradle build configuration for the antlr4-gradle-regressionTestPlugin
+//
+// This gradle build configuraiton publishes the resulting plugin jar
+// into an ivy repository on local disk.  This means that you need to 
+// place something like the following into the gradle.properties file
+// located in your personal .gradle directory:
+//
+// fandianpfRepo=<<Path to your local repository>>
+//
+
+buildscript {
+  repositories {
+    maven {
+      name 'JFrog OSS snapshot repo'
+      url 'https://oss.jfrog.org/oss-snapshot-local/'
+    }
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1-SNAPSHOT'
+  }
+}
+
+apply plugin: 'antlr4'
+apply plugin: 'groovy'
+apply plugin: 'ivy-publish'
+
+repositories {
+  mavenCentral()
+  jcenter()
+}
+
+dependencies {
+  compile localGroovy()
+  compile gradleApi()
+  compile 'org.antlr:antlr4:4.2.2'
+}
+
+task testCopy(type: Copy) {
+  from file('src/test/resources/testDocs')
+  into file('build/testCopy/resources/testDocs')
+}
+
+antlr4 {
+  
+  extraArgs = ["-package", "org.fandianpf.testParser"]
+ 
+  source = file('src/test/antlr4') 
+  
+  // make the Java compile task depend on the antlr4 task
+  compileTestJava.dependsOn antlr4
+
+  // add the generated source files to the list of java sources
+  sourceSets.test.java.srcDirs += antlr4.output
+
+  // add antlr4 to classpath
+  configurations {
+     testCompile.extendsFrom antlr4
+  }
+}
+
+test {
+  
+}
+
+//antlr4test {
+//  
+//}
+
+task testdoc(type: Groovydoc) {
+  source = sourceSets.test.allGroovy
+  destinationDir = file("${docsDir}/testdoc")
+  classpath = sourceSets.test.runtimeClasspath
+}
+
+publishing {
+  // TODO: would be nice to distribute the javadoc as well as the sources
+  
+  publications {
+    repositories {
+      ivy {
+        url "$fandianpfRepo/$archivesBaseName/ivyRepo/"
+      }
+    }
+
+    ivyJava(IvyPublication) {
+      descriptor.withXml {
+        asNode().info[0].appendNode('description', 
+          'Antlr4 plugin for Gradle')
+      }
+
+      organisation 'org.fandianpf'
+      module 'antlr4-regressionTestRig'
+      revision '0.1'
+
+      from components.java
+    }
+  }
+}
+
