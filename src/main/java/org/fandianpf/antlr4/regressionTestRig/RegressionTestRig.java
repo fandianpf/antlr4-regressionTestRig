@@ -79,7 +79,7 @@ public class RegressionTestRig {
 	
 	/** Default bar used in results files to delineate sections. */
 	public static final String PRINT_STREAM_BAR =
-    "--------------------------------------------------------------------------------";
+    "-------------------------------------------------------------------------";
 	
 	/** 
 	 * Option: Fully qualified root name of the grammar to be tested.
@@ -384,7 +384,7 @@ public class RegressionTestRig {
 		  try {
   		  Long[] timingResults = processAnInputFile(reader, outputStream);
   		  timingsTable.addLexerTiming(inputFile, timingResults[0]); // lexer
-  		  timingsTable.addLexerTiming(inputFile, timingResults[1]); // parser
+  		  timingsTable.addParserTiming(inputFile, timingResults[1]); // parser
   		} catch (IOException ioe) {
 	  	  System.err.println("Could not read: ["+inputFile+"]");
 		  }

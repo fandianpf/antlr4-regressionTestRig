@@ -5,7 +5,7 @@
 LOCAL_JAVA_LIB_DIR="/usr/local/Java/lib"
 #ANTLRjar="$LOCAL_JAVA_LIB_DIR/antlr-4.1-complete.jar"
 ANTLRjar="$LOCAL_JAVA_LIB_DIR/antlr-4.2.2-complete.jar"
-REGRESSIONjar="$LOCAL_JAVA_LIB_DIR/antlr-regressionTestRig-0.1.jar"
+REGRESSIONjar="$LOCAL_JAVA_LIB_DIR/antlr4-regressionTestRig-0.1.jar"
 java -cp ".:$REGRESSIONjar:$ANTLRjar:$CLASSPATH" \
   org.fandianpf.antlr4.regressionTestRig.RegressionTestRig $*
 

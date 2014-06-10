@@ -147,7 +147,7 @@ public class ParserTimingsTable {
    */
   public void loadTimingsTable(String timingsTableFileName) throws FileNotFoundException,
     IOException {
-    FileInputStream timingsFile  = new FileInputStream(timingsTableFileName+".csv");
+    FileInputStream timingsFile  = new FileInputStream(timingsTableFileName);
     InputStreamReader timingsReader;
     try {
       timingsReader = new InputStreamReader(timingsFile, "UTF-8");
@@ -203,9 +203,9 @@ public class ParserTimingsTable {
   public void saveTimingsTable(String timingsTableFileName) throws FileNotFoundException {
     PrintStream timingsFile;
     try { 
-      timingsFile = new PrintStream(timingsTableFileName+".csv", "UTF-8");
+      timingsFile = new PrintStream(timingsTableFileName, "UTF-8");
     } catch (UnsupportedEncodingException usee) {
-      timingsFile = new PrintStream(timingsTableFileName+".csv");
+      timingsFile = new PrintStream(timingsTableFileName);
     }
 
     saveTimingsTable(timingsFile);
