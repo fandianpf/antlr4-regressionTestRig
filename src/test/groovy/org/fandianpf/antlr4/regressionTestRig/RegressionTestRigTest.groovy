@@ -59,6 +59,8 @@ class RegressionTestRigTest {
       "-diagnostics",
       "-encoding", "anEncoding",
       "-timings", "timingsTable.csv",
+      "-sourceDir", "aSourceDirPath",
+      "-outputDir", "anOutputDirPath",
       "firstFileName",
       "secondFileName"
     ]
@@ -82,6 +84,9 @@ class RegressionTestRigTest {
     assert rtr.diagnostics;
     assert rtr.SLL;
     assert rtr.encoding == "anEncoding";
+    assert rtr.sourceDir == "aSourceDirPath/";
+    assert rtr.sourceDirRegExp.toString() == "^.*aSourceDirPath/";
+    assert rtr.outputDir == "anOutputDirPath/";
     assert rtr.timingsTablePath == "timingsTable.csv";
     assert rtr.inputFiles.size() == 2;
     assert rtr.inputFiles.get(0) == "firstFileName";

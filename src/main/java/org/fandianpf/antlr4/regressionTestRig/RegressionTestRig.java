@@ -57,6 +57,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Run a lexer/parser combo, optionally printing tree string. 
@@ -70,6 +71,8 @@ import java.util.List;
  *        [-SLL]
  *        [-encoding anEncoding]
  *        [-timings aTimingsTablePath]
+ *        [-sourceDir aSourceDirPath]
+ *        [-outputDir anOutputDirPath]
  *        [input-filename(s)]
  */
 public class RegressionTestRig {
@@ -121,6 +124,21 @@ public class RegressionTestRig {
 	 * regressionTestRig timings.
 	 */
 	protected String timingsTablePath = null;
+	
+	/**
+	 * Option: The path to the source directory. All input file paths will have
+	 * this prefix removed before being used as a key in the timingsTable and
+	 * inorder to compute the output file paths.
+	 */
+  protected String sourceDir = null;
+  
+  /** The regular expression pattern associated with the sourceDir. */
+  protected Pattern sourceDirRegExp = null;
+  /**
+   * Option: The path to the output directory. All output file paths will be
+   * prefixed with this path.
+   */
+  protected String outputDir = null;
 
 	/**
 	 * The lexer used by this grammar to break the input stream into tokens 
@@ -181,6 +199,8 @@ public class RegressionTestRig {
 							   "  [-tokens] [-tree] [-encoding encodingname]\n"+
 							   "  [-trace] [-diagnostics] [-SLL]\n"+
 							   "  [-timings timingsTablePath]\n"+
+							   "  [-sourceDir aSourceDirPath]\n"+
+							   "  [-outputDir anOutputDirPath]\n"+
 							   "  [input-filename(s)]");
 			System.err.println("Use startRuleName='tokens' if GrammarName is a lexer grammar.");
 			System.err.println("Omitting input-filename makes rig read from stdin.");
@@ -227,6 +247,28 @@ public class RegressionTestRig {
 					return false;
 				}
 				timingsTablePath = args[i];
+				i++;
+			}
+			else if ( arg.equals("-sourceDir") ) {
+				if ( i>=args.length ) {
+					System.err.println("missing source directory path on -sourceDir");
+					return false;
+				}
+				sourceDir = args[i];
+				if (!sourceDir.endsWith("/")) sourceDir = sourceDir+"/";
+				// build the regular expression pattern which matches the whole
+				// path up to and including the sourceDir
+				// ALAS THIS WILL NOT WORK ON WINDOWS
+				sourceDirRegExp = Pattern.compile("^.*"+sourceDir);
+				i++;
+			}
+			else if ( arg.equals("-outputDir") ) {
+				if ( i>=args.length ) {
+					System.err.println("missing output directory path on -outputDir");
+					return false;
+				}
+				outputDir = args[i];
+				if (!outputDir.endsWith("/")) outputDir = outputDir+"/";
 				i++;
 			}
 		}
@@ -334,14 +376,27 @@ public class RegressionTestRig {
 	/** Parse each requested input file in turn. */
 	protected void processInputFiles() {
 
+	  // load the timings table
     if (timingsTablePath != null) try {
       timingsTable.loadTimingsTable(timingsTablePath);
     } catch (Exception exp) {
       System.err.println("Could not load the timingsTable from ["+timingsTablePath+"]");
     }
 	  
+    // process each input file one at a time
 		for (String inputFile : inputFiles) {
-		  String outputFile = inputFile+".result";
+		  // Compute the timingsKey and outputFile names
+		  String timingsKey = inputFile;
+		  if (sourceDirRegExp != null) {
+		    timingsKey = sourceDirRegExp.matcher(inputFile).replaceFirst("");
+		  }
+		  String outputFile = timingsKey+".result";
+		  if (outputDir != null) {
+				// ALAS THIS WILL NOT WORK ON WINDOWS
+		    outputFile = outputDir+outputFile;
+		  }
+
+      // report what we are doing		  
 		  if (inputFile!=null) {
 		    System.err.println("RegressionTestRig: parsing ["+inputFile+"]");
 		    System.err.println("     with reports going to ["+outputFile+"]");
@@ -349,6 +404,7 @@ public class RegressionTestRig {
 		    System.err.println("RegressionTestRig: parsing stdin with reports going to stdout");
 		  }
 		  
+		  // Open the intputStream and outputStream
 			InputStream inputStream = System.in;
 			PrintStream outputStream = System.out;
 			try {
@@ -370,6 +426,7 @@ public class RegressionTestRig {
 		    continue;
 		  }
 		  
+		  // Open the reader with the requested encoding
 			Reader reader;
 		  try {
   			if ( encoding!=null ) {
@@ -381,14 +438,17 @@ public class RegressionTestRig {
 		    System.err.println("Could not use encoding: ["+encoding+"] using system default encoding.");
 		    reader = new InputStreamReader(inputStream);
 		  }
+		  
+		  // parse this file
 		  try {
   		  Long[] timingResults = processAnInputFile(reader, outputStream);
-  		  timingsTable.addLexerTiming(inputFile, timingResults[0]); // lexer
-  		  timingsTable.addParserTiming(inputFile, timingResults[1]); // parser
+  		  timingsTable.addLexerTiming(timingsKey, timingResults[0]); // lexer
+  		  timingsTable.addParserTiming(timingsKey, timingResults[1]); // parser
   		} catch (IOException ioe) {
 	  	  System.err.println("Could not read: ["+inputFile+"]");
 		  }
 
+		  // close all readers and streams
   		try {
 			  if (reader!=null) reader.close();
   		  if (inputStream!=null && inputStream!= System.in) inputStream.close();
@@ -398,6 +458,7 @@ public class RegressionTestRig {
 	  	}
 		}
 		
+		// Save the timings table
     if (timingsTablePath != null) try {
       timingsTable.saveTimingsTable(timingsTablePath);
     } catch (Exception exp) {

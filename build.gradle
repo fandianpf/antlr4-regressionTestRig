@@ -37,11 +37,6 @@ dependencies {
   compile 'org.antlr:antlr4:4.2.2'
 }
 
-task testCopy(type: Copy) {
-  from file('src/test/resources/testDocs')
-  into file('build/testCopy/resources/testDocs')
-}
-
 antlr4 {
   
   extraArgs = ["-package", "org.fandianpf.testParser"]
@@ -60,18 +55,22 @@ antlr4 {
   }
 }
 
-test {
-  
-}
-
-//antlr4test {
-//  
-//}
-
 task testdoc(type: Groovydoc) {
   source = sourceSets.test.allGroovy
   destinationDir = file("${docsDir}/testdoc")
   classpath = sourceSets.test.runtimeClasspath
+}
+
+task docsArchive(type: Tar) {
+  dependsOn testdoc
+  dependsOn javadoc
+
+  from(docsDir) {
+    into "/"
+  }
+
+  extension = 'tgz'
+  compression = Compression.GZIP
 }
 
 publishing {
@@ -81,21 +80,26 @@ publishing {
     repositories {
       ivy {
         url "$fandianpfRepo/$archivesBaseName/ivyRepo/"
+        //url "$buildDir/ivyRepo/"
       }
     }
 
     ivyJava(IvyPublication) {
       descriptor.withXml {
         asNode().info[0].appendNode('description', 
-          'Antlr4 plugin for Gradle')
+        'Antlr4 RegressionTestRig tool')
       }
 
       organisation 'org.fandianpf'
       module 'antlr4-regressionTestRig'
       revision '0.1'
-
+      
       from components.java
-    }
+      
+      artifact(docsArchive) {
+        classifier =  'htmlDocs'
+      }
+    }    
   }
 }
 
