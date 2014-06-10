@@ -214,42 +214,35 @@ public class RegressionTestRig {
 		while ( i<args.length ) {
 			String arg = args[i];
 			i++;
+			if ( arg.isEmpty() ) continue;
+			
 			if ( arg.charAt(0)!='-' ) { // input file name
 				inputFiles.add(arg);
-				continue;
-			}
-			if ( arg.equals("-tree") ) {
+			} else if ( arg.equals("-tree") ) {
 				printTree = true;
-			}
-			if ( arg.equals("-tokens") ) {
+			} else if ( arg.equals("-tokens") ) {
 				showTokens = true;
-			}
-			else if ( arg.equals("-trace") ) {
+			}	else if ( arg.equals("-trace") ) {
 				trace = true;
-			}
-			else if ( arg.equals("-SLL") ) {
+			}	else if ( arg.equals("-SLL") ) {
 				SLL = true;
-			}
-			else if ( arg.equals("-diagnostics") ) {
+			}	else if ( arg.equals("-diagnostics") ) {
 				diagnostics = true;
-			}
-			else if ( arg.equals("-encoding") ) {
+			} else if ( arg.equals("-encoding") ) {
 				if ( i>=args.length ) {
 					System.err.println("missing encoding on -encoding");
 					return false;
 				}
 				encoding = args[i];
 				i++;
-			}
-			else if ( arg.equals("-timings") ) {
+			} else if ( arg.equals("-timings") ) {
 				if ( i>=args.length ) {
 					System.err.println("missing timingsTablePath on -timings");
 					return false;
 				}
 				timingsTablePath = args[i];
 				i++;
-			}
-			else if ( arg.equals("-sourceDir") ) {
+			}	else if ( arg.equals("-sourceDir") ) {
 				if ( i>=args.length ) {
 					System.err.println("missing source directory path on -sourceDir");
 					return false;
@@ -261,8 +254,7 @@ public class RegressionTestRig {
 				// ALAS THIS WILL NOT WORK ON WINDOWS
 				sourceDirRegExp = Pattern.compile("^.*"+sourceDir);
 				i++;
-			}
-			else if ( arg.equals("-outputDir") ) {
+			} else if ( arg.equals("-outputDir") ) {
 				if ( i>=args.length ) {
 					System.err.println("missing output directory path on -outputDir");
 					return false;

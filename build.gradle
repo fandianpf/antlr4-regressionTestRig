@@ -73,9 +73,7 @@ task docsArchive(type: Tar) {
   compression = Compression.GZIP
 }
 
-publishing {
-  // TODO: would be nice to distribute the javadoc as well as the sources
-  
+publishing {  
   publications {
     repositories {
       ivy {
