@@ -32,11 +32,74 @@ package org.fandianpf.antlr4.regressionTestRig;
 import org.junit.Test
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.StringReader;
+import java.io.BufferedReader;
 
 /**
  * Unit tests for the ParserTimingsTable class.
  */
 class ParserTimingsTableTest {
+  
+  /** Test the addLexerTiming method. */
+  @Test
+  void addLexerTimingTest() {
+    ParserTimingsTable timingsTable = new ParserTimingsTable();
+    timingsTable.addLexerTiming("testDocName", 10L);
+    assert timingsTable.timingsTable.containsKey("testDocName");
+    Timings lTimings = timingsTable.timingsTable.get("testDocName").getLexerTimings();
+    assert lTimings.timings.size() == 1;
+    assert lTimings.timings.get(0) == 10L;
+  }
+  
+  /** Test the addParserTiming method. */
+  @Test
+  void addParserTimingTest() {
+    ParserTimingsTable timingsTable = new ParserTimingsTable();
+    timingsTable.addLexerTiming("testDocName", 10L);
+    timingsTable.addParserTiming("testDocName", 12L);
+    assert timingsTable.timingsTable.containsKey("testDocName");
+    Timings pTimings = timingsTable.timingsTable.get("testDocName").getParserTimings();
+    assert pTimings.timings.size() == 1;
+    assert pTimings.timings.get(0) == 12L;
+  }
+
+  /**
+   * Test the loadTimingsTable method.
+   * <p>
+   * The timingsTable string has a header line, and one testDoc, with lexer, 
+   * parser and totals timings types. The loadTimingsTable must load the 
+   * appropriate timingsType into the corresponding timings. It must also
+   * load exactly the number of timings given for each timingsType.
+   */
+  @Test
+  void loadTimingsTableTest() {
+    String[] timingsTableStrs = [
+      "\"testDocName\",\"type\",\"min\",\"mean\",\"stdDev\",\"max\",\"values\"",
+      "\"testDocName\",\"t0Lexer\",1,3.0,1.5811388300841898,5,1,2,3,4,5",
+      "\"testDocName\",\"t1Parser\",1,3.0,1.5811388300841898,5,2,4,6,8,10,12",
+      "\"testDocName\",\"t2Totals\",2,6.0,3.1622776601683795,10,3,6,9,12,15"
+    ]
+    String timingsTableStr = 
+      timingsTableStrs[0]+"\n"+
+      timingsTableStrs[1]+"\n"+
+      timingsTableStrs[2]+"\n"+
+      timingsTableStrs[3]+"\n";
+
+    StringReader   timingsReader = new StringReader(timingsTableStr);
+    BufferedReader timingsBuffer = new BufferedReader(timingsReader);
+    
+    ParserTimingsTable timingsTable = new ParserTimingsTable();
+    timingsTable.loadTimingsTable(timingsBuffer);
+    Timings lexerTimings  = timingsTable.timingsTable.get("testDocName").getLexerTimings();
+    Timings parserTimings = timingsTable.timingsTable.get("testDocName").getParserTimings();
+    assert  lexerTimings.timings.get(0) == 1;
+    assert parserTimings.timings.get(0) == 2;
+    assert  lexerTimings.timings.get(4) == 5;
+    assert parserTimings.timings.get(4) == 10;
+    assert parserTimings.timings.get(5) == 12;
+    assert  lexerTimings.timings.size() == 5;
+    assert parserTimings.timings.size() == 6;
+  }
   
   /**
    * Test the saveTimingsTable method.

@@ -102,69 +102,65 @@ public class ParserTimingsTable {
     
     Timings timings = timingsTable.get(testDocName).getParserTimings();
     timings.addTiming(parserTimingMilliSeconds);
-    
   }
 
-  protected void loadTimingsTable(BufferedReader lexerBuffer, 
-                                  BufferedReader parserBuffer) 
+  /**
+   * Load this timings table from the BufferedReader provided.
+   * <p>
+   * All timings will be read from the same BufferedReader. Each line is labled
+   * with the testDocName, and the timingsType. The timingsTypes which are to be 
+   * loaded are t0Lexer, and t1Parser. Any timingsTypes which are not recognized
+   * are ignored.
+   * <p>
+   * @param timingsBuffer the buffered reader from which to load the timings 
+   *                      table.
+   */
+  protected void loadTimingsTable(BufferedReader timingsBuffer)  
                                   throws IOException {
     
-    lexerBuffer.readLine(); // ignore the first (header) line    
-    for (String curLine = lexerBuffer.readLine(); 
-         curLine!=null; curLine = lexerBuffer.readLine()) {
+    timingsBuffer.readLine(); // ignore the first (header) line    
+    for (String curLine = timingsBuffer.readLine(); 
+         curLine!=null; curLine = timingsBuffer.readLine()) {
     
       // ignore this line if it does not start with the name of a testDoc
       if (!curLine.startsWith("\"")) continue;
-
-      // get the name of the testDoc
-      int index = curLine.indexOf('"',1);
-      String testDocName = curLine.substring(1,index-1);
+      TimingsTableLineParser lp = new TimingsTableLineParser(curLine);
+      String testDocName = lp.testDocName;
+      String timingsType = lp.timingsType;
       addTestDocName(testDocName);
-      timingsTable.get(testDocName).getLexerTimings().loadValues(curLine.substring(index));
-    }
-    
-    parserBuffer.readLine(); // ignore the first (header) line    
-    for (String curLine = parserBuffer.readLine(); 
-         curLine!=null; curLine = parserBuffer.readLine()) {
-    
-      // ignore this line if it does not start with the name of a testDoc
-      if (!curLine.startsWith("\"")) continue;
-
-      // get the name of the testDoc
-      int index = curLine.indexOf('"',1);
-      String testDocName = curLine.substring(1,index-1);
-      addTestDocName(testDocName);
-      timingsTable.get(testDocName).getParserTimings().loadValues(curLine.substring(index));
+      if (timingsType.equalsIgnoreCase("t0Lexer")) { 
+        timingsTable.get(testDocName).getLexerTimings().loadValues(lp.restOfLine);
+      } else if (timingsType.equalsIgnoreCase("t1Parser")) {
+        timingsTable.get(testDocName).getParserTimings().loadValues(lp.restOfLine);
+      } else {
+        // ignore any lines which are not t0Lexer or t1Parser
+      }
     }
   }
-  
+
+  /**
+   * Load this timings table from the filesystem file named timingsTableFileName.
+   * See: {@link #loadTimingsTable(BufferedReader)} for details.
+   * <p>
+   * @param timingsTableFileName the path to the filesystem file from which to 
+   *                             load the timings.
+   */
   public void loadTimingsTable(String timingsTableFileName) throws FileNotFoundException,
     IOException {
-    FileInputStream lexerFile  = new FileInputStream(timingsTableFileName+".lexer");
-    FileInputStream parserFile = new FileInputStream(timingsTableFileName+".parser");
-    InputStreamReader lexerReader;
-    InputStreamReader parserReader;
+    FileInputStream timingsFile  = new FileInputStream(timingsTableFileName+".csv");
+    InputStreamReader timingsReader;
     try {
-      lexerReader = new InputStreamReader(lexerFile, "UTF-8");
+      timingsReader = new InputStreamReader(timingsFile, "UTF-8");
     } catch ( UnsupportedEncodingException usee) {
-      lexerReader = new InputStreamReader(lexerFile);
+      timingsReader = new InputStreamReader(timingsFile);
     }
-    try {
-      parserReader = new InputStreamReader(parserFile, "UTF-8");
-    } catch ( UnsupportedEncodingException usee) {
-      parserReader = new InputStreamReader(parserFile);
-    }
-    BufferedReader lexerBuffer  = new BufferedReader(lexerReader);
-    BufferedReader parserBuffer = new BufferedReader(parserReader);
+    BufferedReader timingsBuffer  = new BufferedReader(timingsReader);
 
-    loadTimingsTable(lexerBuffer, parserBuffer);
+    loadTimingsTable(timingsBuffer);
 
-    lexerBuffer.close();
-    parserBuffer.close();
-    lexerReader.close();
-    parserReader.close();
-    lexerFile.close();
-    parserFile.close();
+    timingsBuffer.close();
+    timingsReader.close();
+    timingsFile.close();
   }
 
   /**
@@ -177,7 +173,7 @@ public class ParserTimingsTable {
    * The timingsTypes are t0Lexer, t1Parser, and t2Totals so that a naive
    * alphabetical sort will sort the lexer timings before the parser timings,
    * which will in turn sort before the totals timings. All timingsTypes start
-   * with the charater t (for type) to ensure the field is interpreted as a 
+   * with the character t (for type) to ensure the field is interpreted as a 
    * string.
    * <p>
    * @param timingsFile PrintStream used to save the timings.

@@ -68,6 +68,8 @@ import java.util.List;
  *        [-trace]
  *        [-diagnostics]
  *        [-SLL]
+ *        [-encoding anEncoding]
+ *        [-timings aTimingsTablePath]
  *        [input-filename(s)]
  */
 public class RegressionTestRig {
@@ -113,6 +115,12 @@ public class RegressionTestRig {
 	 * potentially slower ALL(*) parsing strategy.
 	 */
 	protected boolean SLL = false;
+	
+	/** 
+	 * Option: The path to the CSV structured timingsTable used to store the 
+	 * regressionTestRig timings.
+	 */
+	protected String timingsTablePath = null;
 
 	/**
 	 * The lexer used by this grammar to break the input stream into tokens 
@@ -130,6 +138,12 @@ public class RegressionTestRig {
 	protected TreePrinter treePrinter;
 	
 	/**
+	 * The (internal) timings table structure used to store the regressionTestRig 
+	 * timings.
+	 */
+	protected ParserTimingsTable timingsTable;
+	
+	/**
 	 * Constructs an instance of RegressionTestRig on the supplied command line
 	 * argument strings.
 	 * <p>
@@ -139,10 +153,18 @@ public class RegressionTestRig {
 	 * @throws various exceptions thrown by {@link #loadLexer} and {@link #loadParser}.
 	 */
 	public RegressionTestRig(String[] args) throws Exception {
+	  this();
 	  if (processArgs(args)) {
  		  loadLexer();
 	    loadParser();
 	  }
+	}
+	
+	/**
+	 * Constructs an instance of RegressionTestRig for testing purposes only.
+	 */
+	protected RegressionTestRig() {
+	  timingsTable = new ParserTimingsTable();
 	}
 	
 	/**
@@ -156,8 +178,9 @@ public class RegressionTestRig {
 	protected boolean processArgs(String[] args) {	  
 		if ( args.length < 2 ) {
 			System.err.println("java org.fandianpf.antlr4.RegressionTestRig GrammarName startRuleName\n" +
-							   "  [-tokens] [-tree] [-encoding encodingname]\n" +
+							   "  [-tokens] [-tree] [-encoding encodingname]\n"+
 							   "  [-trace] [-diagnostics] [-SLL]\n"+
+							   "  [-timings timingsTablePath]\n"+
 							   "  [input-filename(s)]");
 			System.err.println("Use startRuleName='tokens' if GrammarName is a lexer grammar.");
 			System.err.println("Omitting input-filename makes rig read from stdin.");
@@ -196,6 +219,14 @@ public class RegressionTestRig {
 					return false;
 				}
 				encoding = args[i];
+				i++;
+			}
+			else if ( arg.equals("-timings") ) {
+				if ( i>=args.length ) {
+					System.err.println("missing timingsTablePath on -timings");
+					return false;
+				}
+				timingsTablePath = args[i];
 				i++;
 			}
 		}
@@ -303,6 +334,12 @@ public class RegressionTestRig {
 	/** Parse each requested input file in turn. */
 	protected void processInputFiles() {
 
+    if (timingsTablePath != null) try {
+      timingsTable.loadTimingsTable(timingsTablePath);
+    } catch (Exception exp) {
+      System.err.println("Could not load the timingsTable from ["+timingsTablePath+"]");
+    }
+	  
 		for (String inputFile : inputFiles) {
 		  String outputFile = inputFile+".result";
 		  if (inputFile!=null) {
@@ -344,8 +381,13 @@ public class RegressionTestRig {
 		    System.err.println("Could not use encoding: ["+encoding+"] using system default encoding.");
 		    reader = new InputStreamReader(inputStream);
 		  }
-		  
-  		processAnInputFile(inputFile, reader, outputStream);
+		  try {
+  		  Long[] timingResults = processAnInputFile(reader, outputStream);
+  		  timingsTable.addLexerTiming(inputFile, timingResults[0]); // lexer
+  		  timingsTable.addLexerTiming(inputFile, timingResults[1]); // parser
+  		} catch (IOException ioe) {
+	  	  System.err.println("Could not read: ["+inputFile+"]");
+		  }
 
   		try {
 			  if (reader!=null) reader.close();
@@ -355,6 +397,12 @@ public class RegressionTestRig {
 	  	  // not much more we can do ;-(
 	  	}
 		}
+		
+    if (timingsTablePath != null) try {
+      timingsTable.saveTimingsTable(timingsTablePath);
+    } catch (Exception exp) {
+      System.err.println("Could not save the timingsTable into ["+timingsTablePath+"]");
+    }
 	}
 
 	/** 
@@ -365,80 +413,76 @@ public class RegressionTestRig {
 	 * @param writer the {@link PrintStream} used to print out the tokens,
 	 *               diagnostic reports, and parse tree structure.
 	 */
-	protected void processAnInputFile(String inputFileName, 
-	                                  Reader reader, 
-	                                  PrintStream writer) { 
+	protected Long[] processAnInputFile(Reader reader, PrintStream writer)
+	  throws IOException { 
 	
+	  Long[] timingResults = { -1L, -1L };
+	  
     PrintStreamErrorListener psErrorListener = new PrintStreamErrorListener(writer);
 
-		try {
-  	  if (lexer==null) return;
-  	  if (reader==null) return;
+	  if (lexer==null) return timingResults;
+	  if (reader==null) return timingResults;
   	  
-      lexer.removeErrorListeners();
-      lexer.addErrorListener(psErrorListener);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(psErrorListener);
 
-      ANTLRInputStream input = new ANTLRInputStream(reader);
-		  lexer.setInputStream(input);
-  		CommonTokenStream tokens = new CommonTokenStream(lexer);
+    ANTLRInputStream input = new ANTLRInputStream(reader);
+    lexer.setInputStream(input);
+  	CommonTokenStream tokens = new CommonTokenStream(lexer);
 
-  		writer.println(PRINT_STREAM_BAR);
-  		writer.println("Lexer tokenizing input");
-  		writer.println(PRINT_STREAM_BAR);
+  	writer.println(PRINT_STREAM_BAR);
+  	writer.println("Lexer tokenizing input");
+  	writer.println(PRINT_STREAM_BAR);
   		
-  		Long beforeMilliSeconds = System.currentTimeMillis();
-	  	tokens.fill();
-	  	Long afterMilliSeconds  = System.currentTimeMillis();
-	  	Long timingMilliSeconds = afterMilliSeconds - beforeMilliSeconds;
-	  	writer.println("LexerTiming: "+timingMilliSeconds);
-
-		  if ( showTokens ) {
-    		writer.println(PRINT_STREAM_BAR);
-    		writer.println("Lexer token stream");
-    		writer.println(PRINT_STREAM_BAR);
+  	Long beforeMilliSeconds = System.currentTimeMillis();
+	 	tokens.fill();
+	 	Long afterMilliSeconds  = System.currentTimeMillis();
+	 	timingResults[0] = afterMilliSeconds - beforeMilliSeconds;
+ 	  	
+	  if ( showTokens ) {
+   		writer.println(PRINT_STREAM_BAR);
+   		writer.println("Lexer token stream");
+   		writer.println(PRINT_STREAM_BAR);
     		
-			  for (Object tok : tokens.getTokens()) {
-  			writer.println(tok);
-	  		}
-		  }
+		  for (Object tok : tokens.getTokens()) {
+   			writer.println(tok);
+	 		}
+	  }
 
-		  if ( startRuleName.equals(LEXER_START_RULE_NAME) ) return;
-  		if (parser==null) return;
-	  	if (parserClass==null) return;
+	  if ( startRuleName.equals(LEXER_START_RULE_NAME) ) return timingResults;
+  	if (parser==null) return timingResults;
+	 	if (parserClass==null) return timingResults;
 
-  		writer.println(PRINT_STREAM_BAR);
-      writer.println("Parser building parse tree");
-  		writer.println(PRINT_STREAM_BAR);
+  	writer.println(PRINT_STREAM_BAR);
+    writer.println("Parser building parse tree");
+  	writer.println(PRINT_STREAM_BAR);
 	  	
-	    parser.removeErrorListeners();
-	    parser.addErrorListener(psErrorListener);
-   		if ( diagnostics ) {
-  			parser.addErrorListener(new DiagnosticErrorListener());
- 			}
+	  parser.removeErrorListeners();
+	  parser.addErrorListener(psErrorListener);
+  	if ( diagnostics ) {
+  		parser.addErrorListener(new DiagnosticErrorListener());
+ 		}
 
-  	  parser.setTokenStream(tokens);
-  		parser.setTrace(trace);
+    parser.setTokenStream(tokens);
+  	parser.setTrace(trace);
 
-	  	try {
-			  Method startRule = parserClass.getMethod(startRuleName);
-			  beforeMilliSeconds = System.currentTimeMillis();
-  			ParserRuleContext tree = (ParserRuleContext)startRule.invoke(parser, (Object[])null);
-	  	  afterMilliSeconds  = System.currentTimeMillis();
-	  	  timingMilliSeconds = afterMilliSeconds - beforeMilliSeconds;
-	  	  writer.println("ParserTiming: "+timingMilliSeconds);
+	 	try {
+		  Method startRule = parserClass.getMethod(startRuleName);
+		  beforeMilliSeconds = System.currentTimeMillis();
+  		ParserRuleContext tree = (ParserRuleContext)startRule.invoke(parser, (Object[])null);
+	 	  afterMilliSeconds  = System.currentTimeMillis();
+	 	  timingResults[1] = afterMilliSeconds - beforeMilliSeconds;
 	  	  
-	  		if ( printTree ) {
-      		writer.println(PRINT_STREAM_BAR);
-      		writer.println("Parser parse tree");
-      		writer.println(PRINT_STREAM_BAR);
-		  		writer.println(treePrinter.printTree(tree));
-			  }
-  		}	catch (Exception nsme) {
-	  		System.err.println("No method for rule "+startRuleName+" or it has arguments");
+	 		if ( printTree ) {
+     		writer.println(PRINT_STREAM_BAR);
+     		writer.println("Parser parse tree");
+     		writer.println(PRINT_STREAM_BAR);
+	  		writer.println(treePrinter.printTree(tree));
 		  }
-		} catch (IOException ioe) {
-		  System.err.println("Could not read: ["+inputFileName+"]");
-		}
+  	}	catch (Exception nsme) {
+	 		System.err.println("No method for rule "+startRuleName+" or it has arguments");
+	  }
+		return timingResults;
 	}
 
 }
