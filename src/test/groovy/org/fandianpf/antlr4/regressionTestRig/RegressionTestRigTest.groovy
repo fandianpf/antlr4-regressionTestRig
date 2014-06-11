@@ -192,9 +192,10 @@ class RegressionTestRigTest {
     PrintStream           outStream = new PrintStream(outBaos);
     
     Long[] timingResults = rtr.processAnInputFile(csvReader, outStream);
-    assert timingResults.length == 2;
+    assert timingResults.length == 3;
     assert 0 < timingResults[0];
     assert 0 < timingResults[1];
+    assert -1 < timingResults[2];
     
     String testRigContent = outBaos.toString("UTF-8");
     String[] testRigLines = testRigContent.split("\n");

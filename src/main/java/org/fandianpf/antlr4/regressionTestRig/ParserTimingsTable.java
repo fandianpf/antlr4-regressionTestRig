@@ -48,6 +48,7 @@ public class ParserTimingsTable {
   protected class LexerParserTimings {
     Timings lexerTimings  = new Timings();
     Timings parserTimings = new Timings();
+    Timings numErrors     = new Timings();
     Timings totalTimings  = new Timings();
     
     protected LexerParserTimings() {}
@@ -58,6 +59,10 @@ public class ParserTimingsTable {
     
     protected Timings getParserTimings() {
       return parserTimings; 
+    }
+    
+    protected Timings getNumErrors() {
+      return numErrors; 
     }
     
     protected Timings getTotalTimings() {
@@ -71,6 +76,7 @@ public class ParserTimingsTable {
     protected void computeStats() {
       lexerTimings.computeStats();
       parserTimings.computeStats();
+      numErrors.computeStats();
       totalTimings.computeStats();
     }
   }
@@ -104,6 +110,13 @@ public class ParserTimingsTable {
     timings.addTiming(parserTimingMilliSeconds);
   }
 
+  public void addNumErrors(String testDocName, Long numErrors) {
+    addTestDocName(testDocName);
+    
+    Timings timings = timingsTable.get(testDocName).getNumErrors();
+    timings.addTiming(numErrors);
+  }
+
   /**
    * Load this timings table from the BufferedReader provided.
    * <p>
@@ -132,8 +145,10 @@ public class ParserTimingsTable {
         timingsTable.get(testDocName).getLexerTimings().loadValues(lp.restOfLine);
       } else if (timingsType.equalsIgnoreCase("t1Parser")) {
         timingsTable.get(testDocName).getParserTimings().loadValues(lp.restOfLine);
+      } else if (timingsType.equalsIgnoreCase("t3Errors")) {
+        timingsTable.get(testDocName).getNumErrors().loadValues(lp.restOfLine);
       } else {
-        // ignore any lines which are not t0Lexer or t1Parser
+        // ignore any lines which are not t0Lexer, t1Parser, or t3Errors
       }
     }
   }
@@ -190,6 +205,7 @@ public class ParserTimingsTable {
       lpTimings.getLexerTimings().saveIntoFile(timingsKey, "t0Lexer",  timingsFile);
       lpTimings.getParserTimings().saveIntoFile(timingsKey,"t1Parser", timingsFile);
       lpTimings.getTotalTimings().saveIntoFile(timingsKey, "t2Totals", timingsFile);
+      lpTimings.getNumErrors().saveIntoFile(timingsKey, "t3Errors", timingsFile);
     }
   }
   

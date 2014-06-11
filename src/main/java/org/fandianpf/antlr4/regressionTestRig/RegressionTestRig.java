@@ -434,8 +434,9 @@ public class RegressionTestRig {
 		  // parse this file
 		  try {
   		  Long[] timingResults = processAnInputFile(reader, outputStream);
-  		  timingsTable.addLexerTiming(timingsKey, timingResults[0]); // lexer
+  		  timingsTable.addLexerTiming(timingsKey,  timingResults[0]); // lexer
   		  timingsTable.addParserTiming(timingsKey, timingResults[1]); // parser
+  		  timingsTable.addNumErrors(timingsKey,    timingResults[2]); // numErrors
   		} catch (IOException ioe) {
 	  	  System.err.println("Could not read: ["+inputFile+"]");
 		  }
@@ -469,7 +470,7 @@ public class RegressionTestRig {
 	protected Long[] processAnInputFile(Reader reader, PrintStream writer)
 	  throws IOException { 
 	
-	  Long[] timingResults = { -1L, -1L };
+	  Long[] timingResults = { -1L, -1L, 0L };
 	  
     PrintStreamErrorListener psErrorListener = new PrintStreamErrorListener(writer);
 
@@ -501,6 +502,8 @@ public class RegressionTestRig {
    			writer.println(tok);
 	 		}
 	  }
+	  
+	  timingResults[2] = psErrorListener.getNumberOfErrors();
 
 	  if ( startRuleName.equals(LEXER_START_RULE_NAME) ) return timingResults;
   	if (parser==null) return timingResults;
@@ -535,6 +538,9 @@ public class RegressionTestRig {
   	}	catch (Exception nsme) {
 	 		System.err.println("No method for rule "+startRuleName+" or it has arguments");
 	  }
+	  
+	  timingResults[2] = psErrorListener.getNumberOfErrors();
+	  
 		return timingResults;
 	}
 

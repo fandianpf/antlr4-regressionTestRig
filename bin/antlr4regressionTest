@@ -1,6 +1,26 @@
 #!/bin/bash
 
+#  The contents of this file are placed in the public domain.
+#  You are expected to alter it as appropriate to your needs.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
 # This bash script runs the ANTLR4 RegressionTestRig on a grammar
+#
+# It is still VERY simplistic, and probably only useable by someone who knows
+# how to write bash scripts.
+#
+# You will need to alter this script to reflect where you place your JAVA jar 
+# files
 
 LOCAL_JAVA_LIB_DIR="/usr/local/Java/lib"
 #ANTLRjar="$LOCAL_JAVA_LIB_DIR/antlr-4.1-complete.jar"

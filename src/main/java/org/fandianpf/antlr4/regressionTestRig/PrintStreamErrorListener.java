@@ -53,6 +53,9 @@ public class PrintStreamErrorListener extends BaseErrorListener {
    */
   protected PrintStream output = System.err;
   
+  /** The number of syntaxErrors that have been reported. */
+  protected Long numErrors = 0L;
+  
   /**
    * Class constructor.
    *
@@ -61,6 +64,10 @@ public class PrintStreamErrorListener extends BaseErrorListener {
    */
   public PrintStreamErrorListener(@Nullable PrintStream anOutput) {
     if (anOutput != null) output = anOutput;
+  }
+  
+  public Long getNumberOfErrors() {
+    return numErrors;
   }
   
 	/**
@@ -84,6 +91,7 @@ public class PrintStreamErrorListener extends BaseErrorListener {
 							RecognitionException e)
 	{
 		output.println("line " + line + ":" + charPositionInLine + " " + msg);
+		numErrors++;
 	}
 
 }

@@ -1,4 +1,10 @@
-Copyright (c) 2014, fandianpf
+Copyright (c) 2014, FandianPF (Stephen Gaito)
+  Some files based on those found in org.antlr.v4.runtime
+    (on GitHub antlr/antlr4 project on 2014/06/06)
+  these files have been noted and have the additional copyrights: 
+    Copyright (c) 2012 Terence Parr
+    Copyright (c) 2012 Sam Harwell
+
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
