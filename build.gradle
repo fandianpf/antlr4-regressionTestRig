@@ -77,7 +77,7 @@ publishing {
   publications {
     repositories {
       ivy {
-        url "$fandianpfRepo/$archivesBaseName/ivyRepo/"
+        url fandianpfRepo
         //url "$buildDir/ivyRepo/"
       }
     }
