@@ -44,6 +44,7 @@ import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.atn.PredictionMode;
 
 import javax.print.PrintException;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -230,21 +231,21 @@ public class RegressionTestRig {
 				diagnostics = true;
 			} else if ( arg.equals("-encoding") ) {
 				if ( i>=args.length ) {
-					System.err.println("missing encoding on -encoding");
+					System.err.println("ERROR: missing encoding on -encoding");
 					return false;
 				}
 				encoding = args[i];
 				i++;
 			} else if ( arg.equals("-timings") ) {
 				if ( i>=args.length ) {
-					System.err.println("missing timingsTablePath on -timings");
+					System.err.println("ERROR: missing timingsTablePath on -timings");
 					return false;
 				}
 				timingsTablePath = args[i];
 				i++;
 			}	else if ( arg.equals("-sourceDir") ) {
 				if ( i>=args.length ) {
-					System.err.println("missing source directory path on -sourceDir");
+					System.err.println("ERROR: missing source directory path on -sourceDir");
 					return false;
 				}
 				sourceDir = args[i];
@@ -256,7 +257,7 @@ public class RegressionTestRig {
 				i++;
 			} else if ( arg.equals("-outputDir") ) {
 				if ( i>=args.length ) {
-					System.err.println("missing output directory path on -outputDir");
+					System.err.println("ERROR: missing output directory path on -outputDir");
 					return false;
 				}
 				outputDir = args[i];
@@ -293,7 +294,7 @@ public class RegressionTestRig {
 			try {
 				lexerClass = cl.loadClass(lexerName).asSubclass(Lexer.class);
 			} catch (ClassNotFoundException anOtherException) {
-				System.err.println("Can't load "+lexerName+" as lexer or parser");
+				System.err.println("ERROR: Can't load "+lexerName+" as lexer or parser");
 				throw anOtherException;
 			}
 		}
@@ -302,7 +303,7 @@ public class RegressionTestRig {
 		  Constructor<? extends Lexer> lexerCtor = lexerClass.getConstructor(CharStream.class);
 		  lexer = lexerCtor.newInstance((CharStream)null);
 		} catch (Exception anException) {
-		  System.err.println("Could not create a lexer for "+lexerName);
+		  System.err.println("ERROR: Could not create a lexer for "+lexerName);
 		  throw anException;
 		}
   }
@@ -332,7 +333,7 @@ public class RegressionTestRig {
 			try {
 			  parserClass = cl.loadClass(parserName).asSubclass(Parser.class);
 			}	catch (ClassNotFoundException cnfe) {
-			  System.err.println("Can't load "+parserName+" as a parser");
+			  System.err.println("ERROR: Can't load "+parserName+" as a parser");
 			  throw cnfe;
 			}
 
@@ -340,7 +341,7 @@ public class RegressionTestRig {
 			  Constructor<? extends Parser> parserCtor = parserClass.getConstructor(TokenStream.class);
 			  parser = parserCtor.newInstance((TokenStream)null);
 			} catch (Exception anException) {
-			  System.err.println("Could not create a parser for "+parserName);
+			  System.err.println("ERROR: Could not create a parser for "+parserName);
 			  throw anException;
 			}
 			
@@ -372,7 +373,7 @@ public class RegressionTestRig {
     if (timingsTablePath != null) try {
       timingsTable.loadTimingsTable(timingsTablePath);
     } catch (Exception exp) {
-      System.err.println("Could not load the timingsTable from ["+timingsTablePath+"]");
+      System.err.println("WARNING: Could not load the timingsTable from ["+timingsTablePath+"]");
     }
 	  
     // process each input file one at a time
@@ -382,40 +383,68 @@ public class RegressionTestRig {
 		  if (sourceDirRegExp != null) {
 		    timingsKey = sourceDirRegExp.matcher(inputFile).replaceFirst("");
 		  }
-		  String outputFile = timingsKey+".result";
+		  String outputFileName = timingsKey+".result";
 		  if (outputDir != null) {
 				// ALAS THIS WILL NOT WORK ON WINDOWS
-		    outputFile = outputDir+outputFile;
+		    outputFileName = outputDir+outputFileName;
 		  }
+		  File outputFile = new File(outputFileName);
 
       // report what we are doing		  
 		  if (inputFile!=null) {
-		    System.err.println("RegressionTestRig: parsing ["+inputFile+"]");
+		    System.err.println("\nRegressionTestRig: parsing ["+inputFile+"]");
 		    System.err.println("     with reports going to ["+outputFile+"]");
 		  } else {
-		    System.err.println("RegressionTestRig: parsing stdin with reports going to stdout");
+		    System.err.println("\nRegressionTestRig: parsing stdin with reports going to stdout");
 		  }
 		  
-		  // Open the intputStream and outputStream
+		  // setup the default intputStream and outputStream
 			InputStream inputStream = System.in;
 			PrintStream outputStream = System.out;
-			try {
-  			if ( inputFile!=null ) {
-	  			inputStream = new FileInputStream(inputFile);
-	  			try {
-  		  		if (encoding!=null) {
-    		  		outputStream = new PrintStream(outputFile, encoding);
-		  		  } else {
-    	  			outputStream = new PrintStream(outputFile);
-	  		  	}
-	  		  } catch (UnsupportedEncodingException usee) {
-	  		    System.err.println("Could not use encoding: ["+encoding+"] using system default encoding.");
-   	  			outputStream = new PrintStream(outputFile);
-	  		  }
-		  	}
-		  } catch (FileNotFoundException fnfe) {
-		    System.err.println("Could not open either input or output files");
-		    continue;
+			
+			// If an inputFile has been specified, try to open it
+			if ( inputFile!=null ) {
+
+			  // Open the input file (from the file system).
+  			try {
+	   			inputStream = new FileInputStream(inputFile);
+		    } catch (FileNotFoundException fnfe) {
+		      System.err.println("ERROR: Could not open the input file ["+inputFile+"]");
+		      continue;
+		    }
+
+		    // ensure that all parent directories exist in the path to the output file
+		    try {
+		      File parentDir = outputFile.getParentFile();
+		      if (parentDir != null) {
+		        if (!parentDir.exists()) { 
+	  			    if (!parentDir.mkdirs()) {
+  	  			    System.err.println("ERROR: Could not make parent directories for ["+outputFile+"]");
+	    			    continue;
+	    			  }
+	    			}
+	    		}
+	  		} catch ( SecurityException se ) {
+	  		  System.err.println("ERROR: Security execption trying to make parent directories for ["+outputFile+"]");
+	  		  continue;
+	  		}
+
+	  		// Open the output file (in the file system).
+	  		try {
+  			  try {
+ 		  		  if (encoding!=null) {
+   		  		  outputStream = new PrintStream(outputFileName, encoding);
+	  		    } else {
+   	  			  outputStream = new PrintStream(outputFileName);
+  		  	  }
+  		    } catch (UnsupportedEncodingException usee) {
+  		      System.err.println("WARNING: Could not use encoding: ["+encoding+"] using system default encoding.");
+ 	  			  outputStream = new PrintStream(outputFileName);
+  		    }
+		    } catch (FileNotFoundException fnfe) {
+		      System.err.println("ERROR: Could not open the output file ["+outputFileName+"]");
+		      continue;
+		    }
 		  }
 		  
 		  // Open the reader with the requested encoding
@@ -427,7 +456,7 @@ public class RegressionTestRig {
 			    reader = new InputStreamReader(inputStream);
 		    }
 		  } catch (UnsupportedEncodingException usee) {
-		    System.err.println("Could not use encoding: ["+encoding+"] using system default encoding.");
+		    System.err.println("WARNING: Could not use encoding: ["+encoding+"] using system default encoding.");
 		    reader = new InputStreamReader(inputStream);
 		  }
 		  
@@ -438,7 +467,7 @@ public class RegressionTestRig {
   		  timingsTable.addParserTiming(timingsKey, timingResults[1]); // parser
   		  timingsTable.addNumErrors(timingsKey,    timingResults[2]); // numErrors
   		} catch (IOException ioe) {
-	  	  System.err.println("Could not read: ["+inputFile+"]");
+	  	  System.err.println("ERROR: Could not read: ["+inputFile+"]");
 		  }
 
 		  // close all readers and streams
@@ -455,8 +484,9 @@ public class RegressionTestRig {
     if (timingsTablePath != null) try {
       timingsTable.saveTimingsTable(timingsTablePath);
     } catch (Exception exp) {
-      System.err.println("Could not save the timingsTable into ["+timingsTablePath+"]");
+      System.err.println("ERROR: Could not save the timingsTable into ["+timingsTablePath+"]");
     }
+    System.err.println("");
 	}
 
 	/** 
@@ -536,7 +566,7 @@ public class RegressionTestRig {
 	  		writer.println(treePrinter.printTree(tree));
 		  }
   	}	catch (Exception nsme) {
-	 		System.err.println("No method for rule "+startRuleName+" or it has arguments");
+	 		System.err.println("ERROR: No method for rule "+startRuleName+" or it has arguments");
 	  }
 	  
 	  timingResults[2] = psErrorListener.getNumberOfErrors();
