@@ -34,7 +34,8 @@
 // place something like the following into the gradle.properties file
 // located in your personal .gradle directory:
 //
-// fandianpfRepo=<<Path to your local repository>>
+// fandianpfPublishRepo=<<Path to your local repository>>
+// fandianpfDownloadRepo=http://fandianpf.github.io/ivyRepo
 //
 
 // Add the antlr4-gradle-plugin to the buildscript startup dependencies.
@@ -117,7 +118,7 @@ publishing {
       ivy {
         // IF YOU ONLY want to "release" locally 
         // comment the next line AND uncomment the second line below.
-        url fandianpfRepo
+        url fandianpfPublishRepo
         //url "$buildDir/ivyRepo/"
       }
     }

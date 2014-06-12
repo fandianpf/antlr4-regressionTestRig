@@ -15,8 +15,8 @@ However this RegressionTestRig has been altered to ensure:
 parser's performance over a large collection of example documents.
 
 * As much output as possible can be captured into a results file associated with
-each input file. This enables later proceessing or diffing. (At the moment
--trace output is still sent to System.out -- this is a constraint imposed by the
+each input file. This enables later processing or diffing. (At the moment -trace
+output is still sent to System.out -- this is a constraint imposed by the
 existing ANTLR4 runtime).
 
 * The Lexer and Parser steps are both timed in milliseconds.
