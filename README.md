@@ -36,7 +36,7 @@ in the parse tree, changes have occured.
 
 To use this tool you need *both* the [ANTLR
 runtime](http://www.antlr.org/download.html) and the [jar file for this
-project](http://fandianpf.github.io/antlr/antlr4-regressionTestRig/index.html).
+project](http://fandianpf.github.io/antlr/antlr4-regressionTestRig.html).
 
 Place both of these jar files into an appropriate location on your computer (for
 example):
