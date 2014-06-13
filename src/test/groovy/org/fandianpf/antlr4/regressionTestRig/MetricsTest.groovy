@@ -82,7 +82,6 @@ class MetricsTest {
     for( int metricType = 0; metricType < Metrics.NUM_METRICS; metricType++) {
       String aLine = strTypesBuffer.readLine()
       assert aLine == strTypes[metricType];
-      System.err.println("strType2intEncodingTest ["+aLine+"] should be ["+strTypes[metricType]+"]");
       if (aLine!=null) assert Metrics.strType2int(aLine) == metricType;
     }
   }
