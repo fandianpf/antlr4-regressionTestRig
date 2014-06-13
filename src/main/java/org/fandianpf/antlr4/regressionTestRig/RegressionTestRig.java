@@ -500,7 +500,8 @@ public class RegressionTestRig {
 	
 	  Metrics metricsResults = new Metrics();
 	  
-    PrintStreamErrorListener psErrorListener = new PrintStreamErrorListener(writer);
+    PrintStreamErrorListener psErrorListener = 
+      new PrintStreamErrorListener(writer);
 
 	  if (lexer==null) return metricsResults;
 	  if (reader==null) return metricsResults;
@@ -519,8 +520,10 @@ public class RegressionTestRig {
   	Long beforeMilliSeconds = System.currentTimeMillis();
 	 	tokens.fill();
 	 	Long afterMilliSeconds  = System.currentTimeMillis();
-	 	metricsResults.metric[Metrics.LEXER_TIMINGS] = afterMilliSeconds - beforeMilliSeconds;
- 	  	
+	 	metricsResults.metric[Metrics.LEXER_TIMINGS] = 
+	 	  afterMilliSeconds - beforeMilliSeconds;
+ 	  
+	 	Long numTokens = 0L;
 	  if ( showTokens ) {
    		writer.println(PRINT_STREAM_BAR);
    		writer.println("Lexer token stream");
@@ -528,15 +531,24 @@ public class RegressionTestRig {
     		
 		  for (Object tok : tokens.getTokens()) {
    			writer.println(tok);
+   			numTokens++;
+	 		}
+	  } else {
+		  for (Object tok : tokens.getTokens()) {
+   			numTokens++;
 	 		}
 	  }
+    metricsResults.metric[Metrics.LEXER_NUM_TOKENS] = numTokens;
 	  
-	  metricsResults.metric[Metrics.LEXER_ERRORS] = psErrorListener.getNumberOfErrors();
+	  metricsResults.metric[Metrics.LEXER_ERRORS] = 
+	    psErrorListener.getNumberOfSyntaxErrors();
 
 	  if ( startRuleName.equals(LEXER_START_RULE_NAME) ) return metricsResults;
   	if (parser==null) return metricsResults;
 	 	if (parserClass==null) return metricsResults;
 
+	 	psErrorListener.clearErrorsAndWarnings();
+	 	
   	writer.println(PRINT_STREAM_BAR);
     writer.println("Parser building parse tree");
   	writer.println(PRINT_STREAM_BAR);
@@ -563,11 +575,24 @@ public class RegressionTestRig {
      		writer.println(PRINT_STREAM_BAR);
 	  		writer.println(treePrinter.printTree(tree));
 		  }
+		  
+		  TreeCounter treeCounter = new TreeCounter();
+		  treeCounter.countTree(tree);
+		  metricsResults.metric[Metrics.PARSER_DEPTH] = treeCounter.getTreeDepth();
+		  metricsResults.metric[Metrics.PARSER_NUM_NODES] = treeCounter.getNumberOfNodes();
+		  
   	}	catch (Exception nsme) {
 	 		System.err.println("ERROR: No method for rule "+startRuleName+" or it has arguments");
 	  }
 	  
-	  metricsResults.metric[Metrics.PARSER_ERRORS] = psErrorListener.getNumberOfErrors();
+	  metricsResults.metric[Metrics.PARSER_ERRORS] = 
+	    psErrorListener.getNumberOfSyntaxErrors();
+	  metricsResults.metric[Metrics.AMBIGUITIES] = 
+	    psErrorListener.getNumberOfAmbiguityWarnings();
+	  metricsResults.metric[Metrics.WEAK_CONTEXTS] = 
+	    psErrorListener.getNumberOfWeakContextWarnings();
+	  metricsResults.metric[Metrics.STRONG_CONTEXTS] = 
+	    psErrorListener.getNumberOfStrongContextWarnings();
 	  
 		return metricsResults;
 	}

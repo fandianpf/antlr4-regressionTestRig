@@ -35,14 +35,22 @@ package org.fandianpf.antlr4.regressionTestRig;
 import org.antlr.v4.runtime.ANTLRErrorListener;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Lexer;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.dfa.DFA;
+import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.misc.Nullable;
 
 import java.io.PrintStream;
+import java.util.BitSet;
 
 /**
  * Provides an {@link ANTLRErrorListener} which places all error messages on the
- * provided {@link PrintStream}.  
+ * provided {@link PrintStream}. 
+ * <p>
+ * A PrintSreamErrorListener also keeps counts of the numbers of each message
+ * type. 
  *
  * @author Stephen Gaito (based on work by: Sam Harwell)
  */
@@ -51,10 +59,25 @@ public class PrintStreamErrorListener extends BaseErrorListener {
   /**
    * The print stream (by default System.err)
    */
-  protected PrintStream output = System.err;
+  protected PrintStream output = System.err; 
   
-  /** The number of syntaxErrors that have been reported. */
-  protected Long numErrors = 0L;
+  /** The number of times the {@link #syntaxError} method has been called. */
+  protected Long numSyntaxErrors = 0L;
+  
+  /** The number of times the {@link #reportAmbiguity} method has been called. */
+  protected Long numAmbiguityWarnings = 0L;
+  
+  /**
+   * The number of times the {@link #reportAttemptingFullContext} method has
+   * been called.
+   */
+  protected Long numStrongContextWarnings = 0L;
+  
+  /** 
+   * The number of times the {@link #reportContextSensitivity} method has been
+   * called. 
+   */
+  protected Long numWeakContextWarnings = 0L;
   
   /**
    * Class constructor.
@@ -66,9 +89,45 @@ public class PrintStreamErrorListener extends BaseErrorListener {
     if (anOutput != null) output = anOutput;
   }
   
-  public Long getNumberOfErrors() {
-    return numErrors;
+  /** Clears the number of error and warnings. */
+  public void clearErrorsAndWarnings() {
+    numSyntaxErrors = 0L;
+    numAmbiguityWarnings = 0L;
+    numStrongContextWarnings = 0L;
+    numWeakContextWarnings = 0L;
   }
+  
+  /**
+   * Return the number of times the {@link #syntaxError} method has been called
+   * less the number of Ambiguity, StrongContext and WeakContext warnings.
+   */
+  public Long getNumberOfSyntaxErrors() {
+    Long numWarnings = 
+      numAmbiguityWarnings + 
+      numStrongContextWarnings +
+      numWeakContextWarnings;
+    return numSyntaxErrors - numWarnings; 
+     
+  }
+  
+  /**
+   * Return the number of times the {@link #reportAmbiguity} method has been
+   * called.
+   */
+  public Long getNumberOfAmbiguityWarnings() { return numAmbiguityWarnings; }
+  
+  
+  /**
+   * Return the number of times the {@link #reportAttemptingFullContext} method
+   * has been called.
+   */
+  public Long getNumberOfStrongContextWarnings() { return numStrongContextWarnings; }
+  
+  /**
+   * Return the number of times the {@link #reportContextSensitivity} method
+   * has been called.
+   */
+  public Long getNumberOfWeakContextWarnings() { return numWeakContextWarnings; }
   
 	/**
 	 * {@inheritDoc}
@@ -81,6 +140,8 @@ public class PrintStreamErrorListener extends BaseErrorListener {
 	 * <pre>
 	 * line <em>line</em>:<em>charPositionInLine</em> <em>msg</em>
 	 * </pre>
+	 * <p>
+	 * It also increments the number of syntaxErrors.
 	 */
 	@Override
 	public void syntaxError(Recognizer<?, ?> recognizer,
@@ -91,7 +152,53 @@ public class PrintStreamErrorListener extends BaseErrorListener {
 							RecognitionException e)
 	{
 		output.println("line " + line + ":" + charPositionInLine + " " + msg);
-		numErrors++;
+		numSyntaxErrors++;
 	}
+	
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * We simply increment the number of Ambiguity warnings.
+	 */
+  @Override
+	public void reportAmbiguity(Parser recognizer,
+                       DFA dfa,
+                       int startIndex,
+                       int stopIndex,
+                       boolean exact,
+                       BitSet ambigAlts,
+                       ATNConfigSet configs) {
+     numAmbiguityWarnings++;
+   }
 
+   
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * We simply increment the number of Strong Context warnings.
+	 */
+  @Override
+  public void reportAttemptingFullContext(Parser recognizer,
+                                    DFA dfa,
+                                    int startIndex,
+                                    int stopIndex,
+                                    BitSet conflictingAlts,
+                                    ATNConfigSet configs) {
+     numStrongContextWarnings++;
+   }
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * We simply increment the number of Weak Context warnings.
+	 */
+  @Override
+  public void reportContextSensitivity(Parser recognizer,
+                                DFA dfa,
+                                int startIndex,
+                                int stopIndex,
+                                int prediction,
+                                ATNConfigSet configs) {
+     numWeakContextWarnings++;
+   }
 }

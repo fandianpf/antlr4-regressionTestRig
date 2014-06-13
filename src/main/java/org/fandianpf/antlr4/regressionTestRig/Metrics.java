@@ -31,21 +31,25 @@ package org.fandianpf.antlr4.regressionTestRig;
 /** A simple class to manage the various Lexer and Parser metrics. */
 public class Metrics {
   
-  public long[] metric = { -1L, -1L, -1L, -1L, -1L, -1L, -1L };
+  public long[] metric = { -1L, -1L, -1L, -1L, -1L, -1L, -1L, -1L, -1L, -1L };
 
-  public static final int LEXER_TIMINGS   = 0;
-  public static final int PARSER_TIMINGS  = 1;
-  public static final int LEXER_ERRORS    = 2;
-  public static final int PARSER_ERRORS   = 3;
-  public static final int AMBIGUITIES     = 4;
-  public static final int WEAK_CONTEXTS   = 5;
-  public static final int STRONG_CONTEXTS = 6;
-  public static final int NUM_METRICS     = 7;
+  public static final int LEXER_TIMINGS    = 0;
+  public static final int PARSER_TIMINGS   = 1;
+  public static final int LEXER_NUM_TOKENS = 2;
+  public static final int PARSER_DEPTH     = 3;
+  public static final int PARSER_NUM_NODES = 4;
+  public static final int LEXER_ERRORS     = 5;
+  public static final int PARSER_ERRORS    = 6;
+  public static final int AMBIGUITIES      = 7;
+  public static final int WEAK_CONTEXTS    = 8;
+  public static final int STRONG_CONTEXTS  = 9;
+  public static final int NUM_METRICS      = 10;
   
   public static final String[] METRIC_TYPE = {
-    "t0LexerTimes",  "t1ParserTimes",
-    "t2LexerErrors", "t3ParserErrors",
-    "t4Ambiguities", "t5WeakContexts", "t6StrongContexts"
+    "t00LexerTimes",  "t01ParserTimes",
+    "t10LexerTokens", "t11ParserDepth", "t12ParserNodes",
+    "t20LexerErrors", "t21ParserErrors",
+    "t30Ambiguities", "t31WeakContexts", "t32StrongContexts"
   };
   
   public Metrics() {}
@@ -66,7 +70,7 @@ public class Metrics {
         return metricType;
       }
     }
-    return 0;
+    return -1;
   }
   
   public long getValue(int metricType) {

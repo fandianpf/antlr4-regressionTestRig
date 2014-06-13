@@ -132,7 +132,7 @@ publishing {
 
       organisation 'org.fandianpf'
       module 'antlr4-regressionTestRig'
-      revision '0.1'
+      revision '0.2'
       
       from components.java
       

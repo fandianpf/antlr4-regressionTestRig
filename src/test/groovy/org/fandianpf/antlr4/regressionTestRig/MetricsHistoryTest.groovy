@@ -66,6 +66,16 @@ class MetricsHistoryTest {
   }
   
   /**
+   * Test the loading of incorrect metric type strings.
+   */
+  @Test
+  void loadValuesWrongTypeTest() {
+    MetricsHistory metricsHistory = new MetricsHistory();
+    metricsHistory.loadValues("NoType", "0.1,0.2,0.3,0.4,5.0,6,7,8,9,10,,12,nonLongValue,14");
+    assert metricsHistory.metricsHistory.size() == 0;
+  }
+  
+  /**
    * Test the saving of metrics values (and min, mean, stdDev, and max) into a
    * PrintStream.
    * <p>
@@ -80,7 +90,7 @@ class MetricsHistoryTest {
     PrintStream ps = new PrintStream(baos);
     metricsHistory.saveIntoFile("testDocName", ps);
     String content = baos.toString("UTF-8");
-    assert content.startsWith("\"testDocName\",\"t0LexerTimes\",5,8.875,3.");
+    assert content.startsWith("\"testDocName\",\"t00LexerTimes\",5,8.875,3.");
     assert content.contains(",14,5,6,7,8,9,10,,12,,14\n");
   }
   

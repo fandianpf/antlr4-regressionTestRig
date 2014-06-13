@@ -65,10 +65,10 @@ class MetricsTableTest {
   void loadMetricsTableTest() {
     String[] metricsTableStrs = [
       "\"testDocName\",\"type\",\"min\",\"mean\",\"stdDev\",\"max\",\"values\"",
-      "\"testDocName\",\"t0LexerTimes\",1,3.0,1.5811388300841898,5,1,2,3,4,5",
-      "\"testDocName\",\"t1ParserTimes\",1,3.0,1.5811388300841898,5,2,4,6,8,10,12",
-      "\"testDocName\",\"t2LexerErrors\",2,6.0,3.1622776601683795,10,3,6,9,12,15",
-      "\"testDocName\",\"t3ParserErrors\",2,6.0,3.1622776601683795,10,4,8,12,16,20"
+      "\"testDocName\",\"t00LexerTimes\",1,3.0,1.5811388300841898,5,1,2,3,4,5",
+      "\"testDocName\",\"t01ParserTimes\",1,3.0,1.5811388300841898,5,2,4,6,8,10,12",
+      "\"testDocName\",\"t20LexerErrors\",2,6.0,3.1622776601683795,10,3,6,9,12,15",
+      "\"testDocName\",\"t21ParserErrors\",2,6.0,3.1622776601683795,10,4,8,12,16,20"
     ]
     String metricsTableStr = 
       metricsTableStrs[0]+"\n"+
@@ -106,8 +106,8 @@ class MetricsTableTest {
   /**
    * Test the saveMetricsTable method.
    * <p>
-   * The tested metrics has one testDoc, and so has 8 lines of output (a header 
-   * and a line each for the 7 metric types).
+   * The tested metrics has one testDoc, and so has 11 lines of output (a header 
+   * and a line each for the 10 metric types).
    */
   @Test
   void saveMetricsTableTest() {
@@ -125,13 +125,13 @@ class MetricsTableTest {
     String metricsContent = metricsBaos.toString("UTF-8");
     String[] metricsLines = metricsContent.split("\n");
     
-    assert metricsLines.length  == 8;
+    assert metricsLines.length  == 11;
     
-    assert metricsLines[1].startsWith("\"testDocName\",\"t0LexerTimes\",1,3.0,1.");
+    assert metricsLines[1].startsWith("\"testDocName\",\"t00LexerTimes\",1,3.0,1.");
     assert metricsLines[1].endsWith(",5,1,2,3,4,5");
-    assert metricsLines[2].startsWith("\"testDocName\",\"t1ParserTimes\",1,3.0,1.");
+    assert metricsLines[2].startsWith("\"testDocName\",\"t01ParserTimes\",1,3.0,1.");
     assert metricsLines[2].endsWith(",5,1,2,3,4,5");
-    assert metricsLines[3].startsWith("\"testDocName\",\"t2LexerErrors\",1,3.0,1.");
+    assert metricsLines[3].startsWith("\"testDocName\",\"t10LexerTokens\",1,3.0,1.");
     assert metricsLines[3].endsWith(",5,1,2,3,4,5");
   }
 }

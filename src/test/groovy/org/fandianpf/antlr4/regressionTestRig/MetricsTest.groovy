@@ -43,13 +43,16 @@ class MetricsTest {
   /** Map the various Metrics.METRIC_TYPEs to the correct int. */
   @Test
   void strType2intTest() {
-    assert Metrics.strType2int("t0LexerTimes")     == 0;
-    assert Metrics.strType2int("t1ParserTimes")    == 1;
-    assert Metrics.strType2int("t2LexerErrors")    == 2;
-    assert Metrics.strType2int("t3ParserErrors")   == 3;
-    assert Metrics.strType2int("t4Ambiguities")    == 4;
-    assert Metrics.strType2int("t5WeakContexts")   == 5;
-    assert Metrics.strType2int("t6StrongContexts") == 6;
+    assert Metrics.strType2int("t00LexerTimes")     == 0;
+    assert Metrics.strType2int("t01ParserTimes")    == 1;
+    assert Metrics.strType2int("t10LexerTokens")    == 2;
+    assert Metrics.strType2int("t11ParserDepth")    == 3;
+    assert Metrics.strType2int("t12ParserNodes")    == 4;
+    assert Metrics.strType2int("t20LexerErrors")    == 5;
+    assert Metrics.strType2int("t21ParserErrors")   == 6;
+    assert Metrics.strType2int("t30Ambiguities")    == 7;
+    assert Metrics.strType2int("t31WeakContexts")   == 8;
+    assert Metrics.strType2int("t32StrongContexts") == 9;
   }
   
   /**
@@ -59,13 +62,16 @@ class MetricsTest {
   @Test
   void strType2intEncodingTest() {
     String[] strTypes = [ 
-      "t0LexerTimes",
-      "t1ParserTimes",
-      "t2LexerErrors",
-      "t3ParserErrors",
-      "t4Ambiguities",
-      "t5WeakContexts",
-      "t6StrongContexts"
+      "t00LexerTimes",
+      "t01ParserTimes",
+      "t10LexerTokens",
+      "t11ParserDepth",
+      "t12ParserNodes",
+      "t20LexerErrors",
+      "t21ParserErrors",
+      "t30Ambiguities",
+      "t31WeakContexts",
+      "t32StrongContexts"
     ]
     String strTypesStr =
       strTypes[0]+"\n"+
@@ -74,7 +80,10 @@ class MetricsTest {
       strTypes[3]+"\n"+
       strTypes[4]+"\n"+
       strTypes[5]+"\n"+
-      strTypes[6]+"\n";
+      strTypes[6]+"\n"+
+      strTypes[7]+"\n"+
+      strTypes[8]+"\n"+
+      strTypes[9]+"\n";
       
     StringReader   strTypesReader = new StringReader(strTypesStr);
     BufferedReader strTypesBuffer = new BufferedReader(strTypesReader);
@@ -84,5 +93,11 @@ class MetricsTest {
       assert aLine == strTypes[metricType];
       if (aLine!=null) assert Metrics.strType2int(aLine) == metricType;
     }
+  }
+  
+  /** Test strType2int's ability to deal with random metric string types. */
+  @Test
+  void strType2intWrongInputTest() {
+    assert Metrics.strType2int("NoType") == -1;
   }
 }

@@ -35,7 +35,7 @@ package org.fandianpf.antlr4.regressionTestRig;
 
 public class MetricsDouble {
   
-  public double[] metric = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+  public double[] metric = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
   
   public MetricsDouble() {}
   

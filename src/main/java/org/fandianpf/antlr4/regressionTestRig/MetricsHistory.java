@@ -57,23 +57,27 @@ public class MetricsHistory {
    * <p>
    * The first four values, representing min, mean, stdDev, and max, are ignored.
    */
-  public void loadValues(String metricType, String valuesLineStr) {
-    // get the values as an array of strings split on ','
-    String[] values    = valuesLineStr.split(",");
-    // ignore the min, mean, stdDev, max
-    for ( int i = 4; i < values.length; i++) {
-      // get each value in turn (checking for empty values)
-      Long value = -1L;
-      if (values[i].contains(".")) {
-        try { value = Double.valueOf(values[i]).longValue(); }
-        catch ( Exception exp) { /* ignore */ }
-      } else if (!values[i].isEmpty()) {
-        try { value = Long.valueOf(values[i]); }
-        catch ( Exception exp) { /* ignore */ }
+  public void loadValues(String metricStrType, String valuesLineStr) {
+    // do not do anything if the metricStrType can not be recognized
+    int metricType = Metrics.strType2int(metricStrType);
+    if (-1 < metricType) {
+      // get the values as an array of strings split on ','
+      String[] values    = valuesLineStr.split(",");
+      // ignore the min, mean, stdDev, max
+      for ( int i = 4; i < values.length; i++) {
+        // get each value in turn (checking for empty values)
+        Long value = -1L;
+        if (values[i].contains(".")) {
+          try { value = Double.valueOf(values[i]).longValue(); }
+          catch ( Exception exp) { /* ignore */ }
+        } else if (!values[i].isEmpty()) {
+          try { value = Long.valueOf(values[i]); }
+          catch ( Exception exp) { /* ignore */ }
+        }
+        int index = i - 4;
+        if (metricsHistory.size() <= index) metricsHistory.add(new Metrics());
+        metricsHistory.get(index).setValue(metricType, value);
       }
-      int index = i - 4;
-      if (metricsHistory.size() <= index) metricsHistory.add(new Metrics());
-      metricsHistory.get(index).setValue(Metrics.strType2int(metricType), value);
     }
   }    
   

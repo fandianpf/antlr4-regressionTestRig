@@ -196,9 +196,9 @@ class RegressionTestRigTest {
     assert 0 < metricsResults.metric[Metrics.PARSER_TIMINGS];
     assert -1 < metricsResults.metric[Metrics.LEXER_ERRORS];
     assert -1 < metricsResults.metric[Metrics.PARSER_ERRORS];
-    assert -1 == metricsResults.metric[Metrics.AMBIGUITIES];
-    assert -1 == metricsResults.metric[Metrics.WEAK_CONTEXTS];
-    assert -1 == metricsResults.metric[Metrics.STRONG_CONTEXTS];
+    assert -1 < metricsResults.metric[Metrics.AMBIGUITIES];
+    assert -1 < metricsResults.metric[Metrics.WEAK_CONTEXTS];
+    assert -1 < metricsResults.metric[Metrics.STRONG_CONTEXTS];
     
     String testRigContent = outBaos.toString("UTF-8");
     String[] testRigLines = testRigContent.split("\n");
