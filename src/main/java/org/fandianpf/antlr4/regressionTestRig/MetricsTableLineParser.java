@@ -26,33 +26,38 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
 package org.fandianpf.antlr4.regressionTestRig;
-
-import org.junit.Test
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.io.StringReader;
-import java.io.BufferedReader;
-
+ 
 /**
- * Unit tests for the TimingsTableLineParser class.
- */
-class TimingsTableLineParserTest {
-  
+ * A simple structure/class which parses a MetricsTable line into the 
+ * testDocName, metricsType and the rest of the line (after the comma).
+ */ 
+public class MetricsTableLineParser {
+    
+  public int begTdnIndex = 0;
+  public int endTdnIndex;
+  public int begTTIndex;
+  public int endTTIndex;
+  public String testDocName;
+  public String metricsType;
+  public String restOfLine;
+    
+
   /**
-   * Parse a typical timingsTable line into the testDocName, timingsType, and
-   * the rest of the line (after the comma).
-   */
-  @Test
-  void lineParserTest() {
-    String curLine = 
-      "\"testDocName\",\"t0Lexer\",1,3.0,1.5,5,1,2,3,4,5";
-    ParserTimingsTable timingsTable = new ParserTimingsTable();
-    TimingsTableLineParser lp = new TimingsTableLineParser(curLine);
-    assert lp.testDocName == "testDocName";
-    assert lp.timingsType == "t0Lexer";
-    assert lp.restOfLine  == "1,3.0,1.5,5,1,2,3,4,5";
+   * A simple structure/class which parses a MetricsTable line into the 
+   * testDocName, metricsType and the rest of the line (after the comma).
+   * <p>
+   * @param curLine the line to be parsed.
+   */ 
+  public MetricsTableLineParser(String curLine) {
+    // get the name of the testDoc
+    begTdnIndex = 0;
+    endTdnIndex = curLine.indexOf('"',begTdnIndex+1);
+    testDocName = curLine.substring(begTdnIndex+1,endTdnIndex);
+    begTTIndex  = curLine.indexOf('"',endTdnIndex+1);
+    endTTIndex  = curLine.indexOf('"',begTTIndex+1);
+    metricsType = curLine.substring(begTTIndex+1, endTTIndex);
+    restOfLine  = curLine.substring(endTTIndex+2);
   }
 }
   

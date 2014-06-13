@@ -58,7 +58,7 @@ class RegressionTestRigTest {
       "-SLL",
       "-diagnostics",
       "-encoding", "anEncoding",
-      "-timings", "timingsTable.csv",
+      "-metrics", "metricsTable.csv",
       "-sourceDir", "aSourceDirPath",
       "-outputDir", "anOutputDirPath",
       "firstFileName",
@@ -73,8 +73,8 @@ class RegressionTestRigTest {
     assert !rtr.diagnostics;
     assert !rtr.SLL;
     assert rtr.encoding == null;
-    assert rtr.timingsTablePath == null;
-    assert rtr.timingsTable != null;
+    assert rtr.metricsTablePath == null;
+    assert rtr.metricsTable != null;
     assert rtr.processArgs(args);
     assert rtr.grammarName == "aGrammarName";
     assert rtr.startRuleName == "aStartRule";
@@ -87,7 +87,7 @@ class RegressionTestRigTest {
     assert rtr.sourceDir == "aSourceDirPath/";
     assert rtr.sourceDirRegExp.toString() == "^.*aSourceDirPath/";
     assert rtr.outputDir == "anOutputDirPath/";
-    assert rtr.timingsTablePath == "timingsTable.csv";
+    assert rtr.metricsTablePath == "metricsTable.csv";
     assert rtr.inputFiles.size() == 2;
     assert rtr.inputFiles.get(0) == "firstFileName";
     assert rtr.inputFiles.get(1) == "secondFileName";
@@ -191,11 +191,14 @@ class RegressionTestRigTest {
     ByteArrayOutputStream outBaos   = new ByteArrayOutputStream();    
     PrintStream           outStream = new PrintStream(outBaos);
     
-    Long[] timingResults = rtr.processAnInputFile(csvReader, outStream);
-    assert timingResults.length == 3;
-    assert 0 < timingResults[0];
-    assert 0 < timingResults[1];
-    assert -1 < timingResults[2];
+    Metrics metricsResults = rtr.processAnInputFile(csvReader, outStream);
+    assert 0 < metricsResults.metric[Metrics.LEXER_TIMINGS];
+    assert 0 < metricsResults.metric[Metrics.PARSER_TIMINGS];
+    assert -1 < metricsResults.metric[Metrics.LEXER_ERRORS];
+    assert -1 < metricsResults.metric[Metrics.PARSER_ERRORS];
+    assert -1 == metricsResults.metric[Metrics.AMBIGUITIES];
+    assert -1 == metricsResults.metric[Metrics.WEAK_CONTEXTS];
+    assert -1 == metricsResults.metric[Metrics.STRONG_CONTEXTS];
     
     String testRigContent = outBaos.toString("UTF-8");
     String[] testRigLines = testRigContent.split("\n");

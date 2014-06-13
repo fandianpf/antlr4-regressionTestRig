@@ -21,10 +21,11 @@ existing ANTLR4 runtime).
 
 * The Lexer and Parser steps are both timed in milliseconds.
 
-* Timings and numbers of errors and warnings are recorded to a CSV file which
-has one row per input file for each type of timing, or error/warnings. This
-allows you to identify how changes in the grammar, which might, for example,
-change the pattern of backtracking, impact a large collection of examples.
+* Various types of metrics, such as lexer and parser timings and error/warnings,
+are collected and recorded to a CSV file which has one row per input file for
+each type of metric. This allows you to identify how changes in the grammar,
+which might, for example, change the pattern of backtracking, impact a large
+collection of examples.
 
 * The -tree output has been restructured so that each parse tree rule node is on
 its own line. This allows for more convenient differencing of the output against
@@ -81,10 +82,13 @@ moment this trace is sent directly to the System.out).
 * *-encoding encodingName* read the input file using the encoding provided by
 "encodingname".
 
-* *-timings timingsTablePath* load and save the lexer and parser timings to/from
-the filesystem file located at "timingsTablePath".
+* *-metrics metricsTablePath* (version 0.2) load and save the lexer and parser
+metrics to/from the filesystem file located at "metricsTablePath".
 
-* *-sourceDir sourceDirPath* the name of each testDoc in the timingsTable will
+* *-timings timingsTablePath* (version 0.1) load and save the lexer and parser
+metrics to/from the filesystem file located at "timingsTablePath".
+
+* *-sourceDir sourceDirPath* the name of each testDoc in the metricsTable will
 have this "sourceDirPath" removed from the begining of the path provided for
 each input file.
 

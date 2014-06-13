@@ -71,7 +71,7 @@ import java.util.regex.Pattern;
  *        [-diagnostics]
  *        [-SLL]
  *        [-encoding anEncoding]
- *        [-timings aTimingsTablePath]
+ *        [-metrics aMetricsTablePath]
  *        [-sourceDir aSourceDirPath]
  *        [-outputDir anOutputDirPath]
  *        [input-filename(s)]
@@ -121,14 +121,14 @@ public class RegressionTestRig {
 	protected boolean SLL = false;
 	
 	/** 
-	 * Option: The path to the CSV structured timingsTable used to store the 
-	 * regressionTestRig timings.
+	 * Option: The path to the CSV structured metricsTable used to store the 
+	 * regressionTestRig metrics.
 	 */
-	protected String timingsTablePath = null;
+	protected String metricsTablePath = null;
 	
 	/**
 	 * Option: The path to the source directory. All input file paths will have
-	 * this prefix removed before being used as a key in the timingsTable and
+	 * this prefix removed before being used as a key in the metricsTable and
 	 * inorder to compute the output file paths.
 	 */
   protected String sourceDir = null;
@@ -157,10 +157,10 @@ public class RegressionTestRig {
 	protected TreePrinter treePrinter;
 	
 	/**
-	 * The (internal) timings table structure used to store the regressionTestRig 
-	 * timings.
+	 * The (internal) metrics table structure used to store the regressionTestRig 
+	 * metrics.
 	 */
-	protected ParserTimingsTable timingsTable;
+	protected MetricsTable metricsTable;
 	
 	/**
 	 * Constructs an instance of RegressionTestRig on the supplied command line
@@ -183,7 +183,7 @@ public class RegressionTestRig {
 	 * Constructs an instance of RegressionTestRig for testing purposes only.
 	 */
 	protected RegressionTestRig() {
-	  timingsTable = new ParserTimingsTable();
+	  metricsTable = new MetricsTable();
 	}
 	
 	/**
@@ -199,7 +199,7 @@ public class RegressionTestRig {
 			System.err.println("java org.fandianpf.antlr4.RegressionTestRig GrammarName startRuleName\n" +
 							   "  [-tokens] [-tree] [-encoding encodingname]\n"+
 							   "  [-trace] [-diagnostics] [-SLL]\n"+
-							   "  [-timings timingsTablePath]\n"+
+							   "  [-metrics metricsTablePath]\n"+
 							   "  [-sourceDir aSourceDirPath]\n"+
 							   "  [-outputDir anOutputDirPath]\n"+
 							   "  [input-filename(s)]");
@@ -236,12 +236,12 @@ public class RegressionTestRig {
 				}
 				encoding = args[i];
 				i++;
-			} else if ( arg.equals("-timings") ) {
+			} else if ( arg.equals("-metrics") ) {
 				if ( i>=args.length ) {
-					System.err.println("ERROR: missing timingsTablePath on -timings");
+					System.err.println("ERROR: missing metricsTablePath on -metrics");
 					return false;
 				}
-				timingsTablePath = args[i];
+				metricsTablePath = args[i];
 				i++;
 			}	else if ( arg.equals("-sourceDir") ) {
 				if ( i>=args.length ) {
@@ -369,21 +369,21 @@ public class RegressionTestRig {
 	/** Parse each requested input file in turn. */
 	protected void processInputFiles() {
 
-	  // load the timings table
-    if (timingsTablePath != null) try {
-      timingsTable.loadTimingsTable(timingsTablePath);
+	  // load the metrics table
+    if (metricsTablePath != null) try {
+      metricsTable.loadMetricsTable(metricsTablePath);
     } catch (Exception exp) {
-      System.err.println("WARNING: Could not load the timingsTable from ["+timingsTablePath+"]");
+      System.err.println("WARNING: Could not load the metricsTable from ["+metricsTablePath+"]");
     }
 	  
     // process each input file one at a time
 		for (String inputFile : inputFiles) {
-		  // Compute the timingsKey and outputFile names
-		  String timingsKey = inputFile;
+		  // Compute the metricsKey and outputFile names
+		  String metricsKey = inputFile;
 		  if (sourceDirRegExp != null) {
-		    timingsKey = sourceDirRegExp.matcher(inputFile).replaceFirst("");
+		    metricsKey = sourceDirRegExp.matcher(inputFile).replaceFirst("");
 		  }
-		  String outputFileName = timingsKey+".result";
+		  String outputFileName = metricsKey+".result";
 		  if (outputDir != null) {
 				// ALAS THIS WILL NOT WORK ON WINDOWS
 		    outputFileName = outputDir+outputFileName;
@@ -462,10 +462,8 @@ public class RegressionTestRig {
 		  
 		  // parse this file
 		  try {
-  		  Long[] timingResults = processAnInputFile(reader, outputStream);
-  		  timingsTable.addLexerTiming(timingsKey,  timingResults[0]); // lexer
-  		  timingsTable.addParserTiming(timingsKey, timingResults[1]); // parser
-  		  timingsTable.addNumErrors(timingsKey,    timingResults[2]); // numErrors
+  		  Metrics metricsResults = processAnInputFile(reader, outputStream);
+  		  metricsTable.appendMetrics(metricsKey,  metricsResults);
   		} catch (IOException ioe) {
 	  	  System.err.println("ERROR: Could not read: ["+inputFile+"]");
 		  }
@@ -480,11 +478,11 @@ public class RegressionTestRig {
 	  	}
 		}
 		
-		// Save the timings table
-    if (timingsTablePath != null) try {
-      timingsTable.saveTimingsTable(timingsTablePath);
+		// Save the metrics table
+    if (metricsTablePath != null) try {
+      metricsTable.saveMetricsTable(metricsTablePath);
     } catch (Exception exp) {
-      System.err.println("ERROR: Could not save the timingsTable into ["+timingsTablePath+"]");
+      System.err.println("ERROR: Could not save the metricsTable into ["+metricsTablePath+"]");
     }
     System.err.println("");
 	}
@@ -497,15 +495,15 @@ public class RegressionTestRig {
 	 * @param writer the {@link PrintStream} used to print out the tokens,
 	 *               diagnostic reports, and parse tree structure.
 	 */
-	protected Long[] processAnInputFile(Reader reader, PrintStream writer)
+	protected Metrics processAnInputFile(Reader reader, PrintStream writer)
 	  throws IOException { 
 	
-	  Long[] timingResults = { -1L, -1L, 0L };
+	  Metrics metricsResults = new Metrics();
 	  
     PrintStreamErrorListener psErrorListener = new PrintStreamErrorListener(writer);
 
-	  if (lexer==null) return timingResults;
-	  if (reader==null) return timingResults;
+	  if (lexer==null) return metricsResults;
+	  if (reader==null) return metricsResults;
   	  
     lexer.removeErrorListeners();
     lexer.addErrorListener(psErrorListener);
@@ -521,7 +519,7 @@ public class RegressionTestRig {
   	Long beforeMilliSeconds = System.currentTimeMillis();
 	 	tokens.fill();
 	 	Long afterMilliSeconds  = System.currentTimeMillis();
-	 	timingResults[0] = afterMilliSeconds - beforeMilliSeconds;
+	 	metricsResults.metric[Metrics.LEXER_TIMINGS] = afterMilliSeconds - beforeMilliSeconds;
  	  	
 	  if ( showTokens ) {
    		writer.println(PRINT_STREAM_BAR);
@@ -533,11 +531,11 @@ public class RegressionTestRig {
 	 		}
 	  }
 	  
-	  timingResults[2] = psErrorListener.getNumberOfErrors();
+	  metricsResults.metric[Metrics.LEXER_ERRORS] = psErrorListener.getNumberOfErrors();
 
-	  if ( startRuleName.equals(LEXER_START_RULE_NAME) ) return timingResults;
-  	if (parser==null) return timingResults;
-	 	if (parserClass==null) return timingResults;
+	  if ( startRuleName.equals(LEXER_START_RULE_NAME) ) return metricsResults;
+  	if (parser==null) return metricsResults;
+	 	if (parserClass==null) return metricsResults;
 
   	writer.println(PRINT_STREAM_BAR);
     writer.println("Parser building parse tree");
@@ -557,7 +555,7 @@ public class RegressionTestRig {
 		  beforeMilliSeconds = System.currentTimeMillis();
   		ParserRuleContext tree = (ParserRuleContext)startRule.invoke(parser, (Object[])null);
 	 	  afterMilliSeconds  = System.currentTimeMillis();
-	 	  timingResults[1] = afterMilliSeconds - beforeMilliSeconds;
+	 	  metricsResults.metric[Metrics.PARSER_TIMINGS] = afterMilliSeconds - beforeMilliSeconds;
 	  	  
 	 		if ( printTree ) {
      		writer.println(PRINT_STREAM_BAR);
@@ -569,9 +567,9 @@ public class RegressionTestRig {
 	 		System.err.println("ERROR: No method for rule "+startRuleName+" or it has arguments");
 	  }
 	  
-	  timingResults[2] = psErrorListener.getNumberOfErrors();
+	  metricsResults.metric[Metrics.PARSER_ERRORS] = psErrorListener.getNumberOfErrors();
 	  
-		return timingResults;
+		return metricsResults;
 	}
 
 }

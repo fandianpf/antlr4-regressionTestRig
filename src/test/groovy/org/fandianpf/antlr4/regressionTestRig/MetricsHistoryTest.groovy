@@ -34,16 +34,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 /**
- * Unit tests for the Timings class.
+ * Unit tests for the MetricsHistory class.
  */
-class TimingsTest {
+class MetricsHistoryTest {
  
   /**
    * Test the loading of values from a comma delimited string.
    * <p>
    * The first four values, min, mean, stdDev, and max, are ignored.
    * <p>
-   * All subsequent values are added to the timings ArrayList.
+   * All subsequent values are added to the metrics ArrayList.
    * <p>
    * Values which are empty (white space between a pair of commas) 
    * or not in a long or double format are ignored and given the internal value
@@ -51,37 +51,37 @@ class TimingsTest {
    */
   @Test
   void loadValuesTest() {
-    Timings timings = new Timings();
-    timings.loadValues("0.1,0.2,0.3,0.4,5.0,6,7,8,9,10,,12,nonLongValue,14");
-    timings.computeStats();
-    assert timings.getNumValues() == 8;
-    assert timings.timings.size() == 10;
-    assert timings.timings.get(0) == 5;
-    assert timings.timings.get(1) == 6;
-    assert timings.timings.get(5) == 10;
-    assert timings.timings.get(6) == -1;
-    assert timings.timings.get(7) == 12;
-    assert timings.timings.get(8) == -1;
-    assert timings.timings.get(9) == 14;
+    MetricsHistory metricsHistory = new MetricsHistory();
+    metricsHistory.loadValues(Metrics.METRIC_TYPE[2], "0.1,0.2,0.3,0.4,5.0,6,7,8,9,10,,12,nonLongValue,14");
+    metricsHistory.computeStats();
+//    assert metricsHistory.getNumValues() == 8;
+    assert metricsHistory.metricsHistory.size() == 10;
+    assert metricsHistory.metricsHistory.get(0).metric[2] == 5;
+    assert metricsHistory.metricsHistory.get(1).metric[2] == 6;
+    assert metricsHistory.metricsHistory.get(5).metric[2] == 10;
+    assert metricsHistory.metricsHistory.get(6).metric[2] == -1;
+    assert metricsHistory.metricsHistory.get(7).metric[2] == 12;
+    assert metricsHistory.metricsHistory.get(8).metric[2] == -1;
+    assert metricsHistory.metricsHistory.get(9).metric[2] == 14;
   }
   
   /**
-   * Test the saving of timings values (and min, mean, stdDev, and max) into a
+   * Test the saving of metrics values (and min, mean, stdDev, and max) into a
    * PrintStream.
    * <p>
    * Values which are negative are output as white space.
    */
   @Test
   void saveIntoFileTest() {
-    Timings timings = new Timings();
-    timings.loadValues("0.1,0.2,0.3,0.4,5.0,6,7,8,9,10,,12,nonLongValue,14");
-    timings.computeStats();
+    MetricsHistory metricsHistory = new MetricsHistory();
+    metricsHistory.loadValues(Metrics.METRIC_TYPE[0], "0.1,0.2,0.3,0.4,5.0,6,7,8,9,10,,12,nonLongValue,14");
+    metricsHistory.computeStats();
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream ps = new PrintStream(baos);
-    timings.saveIntoFile("testDocName", "testType", ps);
+    metricsHistory.saveIntoFile("testDocName", ps);
     String content = baos.toString("UTF-8");
-    assert content.startsWith("\"testDocName\",\"testType\",5,8.875,3.");
-    assert content.endsWith(",14,5,6,7,8,9,10,,12,,14\n");
+    assert content.startsWith("\"testDocName\",\"t0LexerTimes\",5,8.875,3.");
+    assert content.contains(",14,5,6,7,8,9,10,,12,,14\n");
   }
   
   /**
@@ -89,35 +89,12 @@ class TimingsTest {
    */
   @Test
   void computeStatsTest() {
-    Timings timings = new Timings();
-    timings.loadValues("0.1,0.2,0.3,0.4,5.0,6,7,8,9,10,,12,nonLongValue,14");
-    timings.computeStats();
-    assert timings.getMin() == 5;
-    assert timings.getMean() == 8.875;
-    assert Math.abs(timings.getStdDev()-3.04431) < 0.001;
-    assert timings.getMax() == 14;
-  }
-  
-  /**
-   * Test combining two sets of timings into a set of totals timings.
-   * <p>
-   * The set of timings in the base timings are totaled with the corresponding 
-   * timings in the other timings. If there are more base timings than other 
-   * timings, the base timings with no corresponding other timings are copied as
-   * is to the combined timings. If there are more other timings than base
-   * timings the extra other timings are ignored.
-   */ 
-  @Test
-  void combineTest() {
-    Timings base  = new Timings();
-    Timings other = new Timings();
-    base.loadValues("0.1,0.2,0.3,0.4,5.0,6,7,8,9,10,,12,nonLongValue,14");
-    other.loadValues("0.1,0.2,0.3,0.4,5.0,6,7,8,9,10,,12");
-    Timings combined = base.combine(other);
-    assert combined.timings.get(0) == 10;
-    assert combined.timings.get(6) == -1;
-    assert combined.timings.get(7) == 24;
-    assert combined.timings.get(8) == -1;
-    assert combined.timings.get(9) == 14;
+    MetricsHistory metricsHistory = new MetricsHistory();
+    metricsHistory.loadValues(Metrics.METRIC_TYPE[0], "0.1,0.2,0.3,0.4,5.0,6,7,8,9,10,,12,nonLongValue,14");
+    metricsHistory.computeStats();
+    assert metricsHistory.min.metric[0] == 5;
+    assert metricsHistory.mean.metric[0] == 8.875;
+    assert Math.abs(metricsHistory.stdDev.metric[0]-3.04431) < 0.001;
+    assert metricsHistory.max.metric[0] == 14;
   }
 }

@@ -92,6 +92,10 @@ task testdoc(type: Groovydoc) {
   classpath = sourceSets.test.runtimeClasspath
 }
 
+task cleanJEdit(type: Delete) {
+  
+}
+
 task docsArchive(type: Tar) {
   dependsOn testdoc
   dependsOn javadoc
@@ -110,6 +114,7 @@ task docsArchive(type: Tar) {
 // requirments for the 3-clause BSD license.
 jar {
   from "LICENSE"
+  from "HISTORY.md"
 }
 
 publishing {  
@@ -137,6 +142,10 @@ publishing {
       
       artifact(docsArchive) {
         classifier =  'htmlDocs'
+      }
+      
+      artifact(project.file("HISTORY.md")) {
+        classifier = 'releaseNotes'
       }
     }    
   }
