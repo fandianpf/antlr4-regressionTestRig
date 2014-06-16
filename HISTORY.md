@@ -1,5 +1,9 @@
 # Version history
 
+## V0.3 not yet released
+
+* use DecimalFormat to output StdDev to two decimal places.
+
 ## V0.2 2014/06/13
 
 * duplicate the directory hierarchy of the testDocs in the output directory.

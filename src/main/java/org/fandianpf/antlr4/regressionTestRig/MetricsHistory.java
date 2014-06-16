@@ -104,7 +104,8 @@ public class MetricsHistory {
       outFile.print(',');
       outFile.print(mean.metric[metricType]);
       outFile.print(',');
-      outFile.print(stdDev.metric[metricType]);
+      DecimalFormat df = new DecimalFormat("#,###.##");
+      outFile.print(df.format(stdDev.metric[metricType]));
       outFile.print(',');
       outFile.print(max.metric[metricType]);
       for(int i = 0; i < metricsHistory.size(); i++) {
