@@ -196,9 +196,17 @@ public class TreePrinter {
 	/**
 	 * Constructor.
 	 *
-	 * @param anIndentAmount A String containing the characters used to increase
-	 *                       the indent for each recursive call to {@link #printTree}.
-	 *
+	 * @param aPrimaryIndentAmount A String containing the characters used to
+	 *                             increase the indent for each recursive call to
+	 *                             {@link #printTree}.
+	 *                             See: {@link #newIndent}.
+	 * @param aSecondaryIndentAmount A String containing the characters used to
+	 *                               increase the indent for each recursive call
+	 *                               to {@link #printTree}.
+	 *                               See: {@link #newIndent}.
+	 * @param anIndentCyclePeriod The secondaryIndentAmount is used at the end of
+	 *                            each indent cycle period. 
+	 *                            See: {@link #newIndent}.
 	 * @param recog          The lexer/parser used to obtain the rule names to be
 	 *                       printed in the printTree output.
 	 */

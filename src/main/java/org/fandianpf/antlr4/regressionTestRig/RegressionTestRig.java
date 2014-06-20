@@ -70,6 +70,9 @@ import java.util.regex.Pattern;
  *        [-trace]
  *        [-diagnostics]
  *        [-SLL]
+ *        [-primaryIndent primaryIndentString]
+ *        [-secondaryIndent secondaryIndentString]
+ *        [-indentCycle indentCyclePeriod]
  *        [-encoding anEncoding]
  *        [-metrics aMetricsTablePath]
  *        [-sourceDir aSourceDirPath]
@@ -164,6 +167,8 @@ public class RegressionTestRig {
 	
 	/** The TreePrinter intitalized for use with the loaded parser. */
 	protected TreePrinter treePrinter;
+	
+	protected PrintStreamTraceListener traceListener;
 	
 	/**
 	 * The (internal) metrics table structure used to store the regressionTestRig 
@@ -343,7 +348,7 @@ public class RegressionTestRig {
 		  throw anException;
 		}
   }
-
+  
   /**
    * Load the parser as requested by the command line arguments, and then setup
    * the parser for the 'diagnostics', 'printTree' or 'SLL' options.
@@ -392,6 +397,11 @@ public class RegressionTestRig {
   			                              indentCyclePeriod,
   			                              parser);
 			}
+			
+			if ( trace ) {
+			  traceListener = new PrintStreamTraceListener(parser);
+			  parser.addParseListener(traceListener);
+			}             
 
 			if ( SLL ) { // overrides diagnostics
 				parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
@@ -501,7 +511,9 @@ public class RegressionTestRig {
 		  
 		  // parse this file
 		  try {
-  		  Metrics metricsResults = processAnInputFile(reader, outputStream);
+		    String inputFilePath = inputFile;
+		    if ( inputFile == null) inputFilePath = "stdIn";
+  		  Metrics metricsResults = processAnInputFile(inputFilePath, reader, outputStream);
   		  metricsTable.appendMetrics(metricsKey,  metricsResults);
   		} catch (IOException ioe) {
 	  	  System.err.println("ERROR: Could not read: ["+inputFile+"]");
@@ -534,14 +546,38 @@ public class RegressionTestRig {
 	 * @param writer the {@link PrintStream} used to print out the tokens,
 	 *               diagnostic reports, and parse tree structure.
 	 */
-	protected Metrics processAnInputFile(Reader reader, PrintStream writer)
+	protected Metrics processAnInputFile(String inputFilePath,
+	                                     Reader reader,
+	                                     PrintStream writer)
 	  throws IOException { 
 	
 	  Metrics metricsResults = new Metrics();
 	  
     PrintStreamErrorListener psErrorListener = 
       new PrintStreamErrorListener(writer);
-
+    
+    // Start by recording what we have been asked to do:
+    writer.println(PRINT_STREAM_BAR);
+    writer.println("RegressionTestRig options:");
+    writer.println("  grammarName: "+ grammarName);
+    writer.println("  startRuleName: "+ startRuleName);
+    writer.println("  tokens: "+ (showTokens ? "true" : "false"));
+    writer.println("  tree: "+ (printTree ? "true" : "false"));
+    writer.println("  trace: "+ (trace ? "true" : "false"));
+    writer.println("  diagnostics: "+ (diagnostics ? "true" : "false"));
+    writer.println("  SLL: "+ (SLL ? "true" : "false"));
+    writer.println("  encoding: "+ encoding);
+    writer.println("  primaryIndent: ["+ primaryIndentStr + "]");
+    writer.println("  secondaryIndent: ["+ secondaryIndentStr + "]");
+    writer.println("  indentCyclePeriod: "+ Integer.toString(indentCyclePeriod));
+    writer.println("  encoding: ["+ encoding +"]");
+    writer.println("  metrics: ["+ metricsTablePath +"]");
+    writer.println("  sourceDir: ["+ sourceDir + "]");
+    writer.println("  outputDir: ["+ outputDir + "]");
+    writer.println("  inputFile: ["+ inputFilePath +"]");
+    writer.println(PRINT_STREAM_BAR);
+    writer.println("");
+    
 	  if (lexer==null) return metricsResults;
 	  if (reader==null) return metricsResults;
   	  
@@ -600,7 +636,7 @@ public class RegressionTestRig {
  		}
 
     parser.setTokenStream(tokens);
-  	parser.setTrace(trace);
+    if ( trace ) traceListener.setPrintStream(writer);
 
 	 	try {
 		  Method startRule = parserClass.getMethod(startRuleName);

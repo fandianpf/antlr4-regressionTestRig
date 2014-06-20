@@ -1,8 +1,14 @@
 # Version history
 
-## V0.3 not yet released
+## V0.3 2014/06/20
 
-* use DecimalFormat to output StdDev to two decimal places.
+* use DecimalFormat to output StdDev to two decimal places in metrics csv file.
+* added PrintStreamTraceListener to capture trace information in results files.
+* improved PrintTree output to provide more helpful indenting strings which
+  assist the visual lining up of the parse tree levels.
+* improved PrintTree output to list line and character numbers for each symbol.
+* improved PrintTree output to ensure ErrorNodes are noticed as ERRORs.
+* added output of the RegressionTestRig arguments to the result files.
 
 ## V0.2 2014/06/13
 

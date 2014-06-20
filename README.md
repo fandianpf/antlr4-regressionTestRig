@@ -15,9 +15,7 @@ However this RegressionTestRig has been altered to ensure:
 parser's performance over a large collection of example documents.
 
 * As much output as possible can be captured into a results file associated with
-each input file. This enables later processing or diffing. (At the moment -trace
-output is still sent to System.out -- this is a constraint imposed by the
-existing ANTLR4 runtime).
+each input file. This enables later processing or diffing.
 
 * The Lexer and Parser steps are both timed in milliseconds.
 
@@ -78,6 +76,16 @@ indented to reflect the tree structure).
 moment this trace is sent directly to the System.out).
 
 * *-diagnostics* diagnostic warning messages are captured to the result file.
+
+* *-primaryIndent primaryIndentString* the (primary) string used to indent the
+parse tree output for each recursive level.
+
+* *-secondaryIndent secondaryIndentString* the (secondary) string used to indent
+the parse tree output for each recursive level.
+
+* *-indentCycle indentCyclePeriod* the last indent in each indent cycle will use
+the secondary indent string (rather than the primary indent string). This makes 
+it easier to determe the recursive depth of the parse tree at any one node.
 
 * *-encoding encodingName* read the input file using the encoding provided by
 "encodingname".

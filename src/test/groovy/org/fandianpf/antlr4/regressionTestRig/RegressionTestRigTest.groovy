@@ -197,7 +197,7 @@ class RegressionTestRigTest {
     ByteArrayOutputStream outBaos   = new ByteArrayOutputStream();    
     PrintStream           outStream = new PrintStream(outBaos);
     
-    Metrics metricsResults = rtr.processAnInputFile(csvReader, outStream);
+    Metrics metricsResults = rtr.processAnInputFile("stdIn", csvReader, outStream);
     assert 0 < metricsResults.metric[Metrics.LEXER_TIMINGS];
     assert 0 < metricsResults.metric[Metrics.PARSER_TIMINGS];
     assert -1 < metricsResults.metric[Metrics.LEXER_ERRORS];
@@ -208,13 +208,13 @@ class RegressionTestRigTest {
     
     String testRigContent = outBaos.toString("UTF-8");
     String[] testRigLines = testRigContent.split("\n");
-    assert testRigLines.length == 247;
-    assert testRigLines[1] == "Lexer tokenizing input";
-    assert testRigLines[4] == "Lexer token stream";
+    assert testRigLines.length == 267;
+    assert testRigLines[21].contains("Lexer tokenizing input");
+    assert testRigLines[24].contains("Lexer token stream");
     assert testRigContent.contains("[@0,0:12='\"REVIEW_DATE\"',<5>,1:0]");
     assert testRigContent.contains("The Parser");
-    assert testRigLines[96] == "Parser building parse tree";
-    assert testRigLines[99] == "Parser parse tree";
+    assert testRigLines[116].contains("Parser building parse tree");
+    assert testRigLines[119].contains("Parser parse tree");
     assert testRigContent.contains("file");
     assert testRigContent.contains("hdr");
     assert testRigContent.contains("row");
