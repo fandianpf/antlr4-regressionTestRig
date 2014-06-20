@@ -49,11 +49,6 @@ import java.util.List;
 
 /** TreeCounter computes complexity metrics for a parse tree. */
 public class TreeCounter {
-  
-  /**
-   * The rule names used in the {@link #printTree} output. Can be null.
-   */
-  protected List<String> ruleNames = null;
 
   /** The length of the longest branch in this tree. */
   protected long treeDepth = 0L;

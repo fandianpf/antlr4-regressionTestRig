@@ -30,6 +30,7 @@ package org.fandianpf.antlr4.regressionTestRig;
 
 import java.util.ArrayList;
 import java.io.PrintStream;
+import java.text.DecimalFormat;
 
 /** 
  * The a sequence of lexer/parser metrics. 
@@ -89,8 +90,7 @@ public class MetricsHistory {
    * Save this set of metrics into the given file.
    * <p>
    * @param testDocName the name of the test document for this set of metrics.
-   * @param testType    the type (lexer, parser, or totals) of metrics 
-   *                    represented by this set of metrics.
+   * @param outFile the printStream on which to out put these metrics.
    */
   public void saveIntoFile(String testDocName, PrintStream outFile) {
     computeStats();

@@ -57,6 +57,9 @@ class RegressionTestRigTest {
       "-trace",
       "-SLL",
       "-diagnostics",
+      "-primaryIndent", "- ",
+      "-secondaryIndent", "| ",
+      "-indentCycle", "7",
       "-encoding", "anEncoding",
       "-metrics", "metricsTable.csv",
       "-sourceDir", "aSourceDirPath",
@@ -83,6 +86,9 @@ class RegressionTestRigTest {
     assert rtr.trace;
     assert rtr.diagnostics;
     assert rtr.SLL;
+    assert rtr.primaryIndentStr == "- ";
+    assert rtr.secondaryIndentStr == "| ";
+    assert rtr.indentCyclePeriod == 7;
     assert rtr.encoding == "anEncoding";
     assert rtr.sourceDir == "aSourceDirPath/";
     assert rtr.sourceDirRegExp.toString() == "^.*aSourceDirPath/";

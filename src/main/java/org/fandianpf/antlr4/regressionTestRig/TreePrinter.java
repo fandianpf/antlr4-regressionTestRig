@@ -35,6 +35,7 @@ package org.fandianpf.antlr4.regressionTestRig;
 
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.Tree;
@@ -57,10 +58,22 @@ import java.util.List;
 public class TreePrinter {
 
   /**
-   * The characters used to increase the indentation for each recursive call
-   * to {@link #printTree}.
+   * The primary collection of characters used to increase the indentation for 
+   * each recursive call to {@link #printTree}.
    */
-  protected String indentAmount = "  ";
+  protected String primaryIndentAmount = ". ";
+  
+  /**
+   * The secondary collection of characters used to increase the indentation for 
+   * each recursive call to {@link #printTree}.
+   */
+  protected String secondaryIndentAmount = ", ";
+
+  /** Every indentCyclePeriod-th indent will use the secondaryIndentAmount. */
+  protected int indentCyclePeriod = 5;
+  
+  /** The length of the indent string after one full cycle. */
+  protected int indentCycleLength = 10;
   
   /**
    * The rule names used in the {@link #printTree} output. Can be null.
@@ -73,64 +86,111 @@ public class TreePrinter {
    */
   protected StringBuilder buf;
   
+  /**
+   * Build the correct indent string.
+   *
+   * @param currentIndent the current indent string.
+   * @return returns the new indent string.
+   */
+  public String newIndent(String currentIndent) {
+    int remainderLength = currentIndent.length() % indentCycleLength;
+    int cycleIndex      = remainderLength / primaryIndentAmount.length();
+    if (cycleIndex < indentCyclePeriod-1) return currentIndent + primaryIndentAmount;
+    return currentIndent + secondaryIndentAmount;
+  }
+  
 	/** 
 	 * Base call to print out a whole parse tree in indented form. 
-	 * {@link #getNodeText} is used on the node payloads to get the text for the
+	 * {@link #appendNodeText} is used on the node payloads to get the text for the
 	 * nodes.  Detect parse trees and extract data appropriately.
 	 */
 	public String printTree(@Nullable Tree t) {
 	  if (t == null) return "<No parse tree found>";
 	  
 	  buf = new StringBuilder();
-    printTree(t, indentAmount);
+	  
+    printTree(t, newIndent(""));
     return buf.toString();
   }
   
 	/** 
 	 * Recursive call to print out a sub-tree in indented form.
-	 * {@link #getNodeText} is used on the node payloads to get the text for the
+	 * {@link #appendNodeText} is used on the node payloads to get the text for the
 	 * nodes. Detect parse trees and extract data appropriately.
 	 */
 	protected void printTree(@NotNull Tree t, String indent) {
-		String s = Utils.escapeWhitespace(getNodeText(t), false);
 		buf.append("\n");
 		buf.append(indent);
-		buf.append(s);
-		String childIndent = indent+indentAmount;
+		appendNodeText(t);
+		String childIndent = newIndent(indent);
 		for (int i = 0; i<t.getChildCount(); i++) {
 			printTree(t.getChild(i), childIndent);
 		}
 	}
 
 	/**
-	 * Determine some string representation for the given node.
+	 * Append the symbol and its position in the input text to the parse tree
+	 * buffer.
+	 *
+	 * @param symbol the symbol which should be appended to the parse tree.
+	 * @return boolean true if symbol is not null, false otherwise.
+	 */
+	protected boolean appendToken(Token symbol) {
+	  if (symbol != null) {
+		  buf.append("[");
+			String s = Utils.escapeWhitespace(symbol.getText(), false);
+			buf.append(s);
+			buf.append("]    (line ");
+			buf.append(String.valueOf(symbol.getLine()));
+			buf.append(":");
+			buf.append(String.valueOf(symbol.getCharPositionInLine()));
+			buf.append(")");
+			return true;
+		}
+		return false;
+	}
+	
+	/** Append the rule name for this rule context. */
+	protected boolean appendRule(RuleContext aRuleContext) {
+	  if (aRuleContext != null) {
+	    buf.append(ruleNames.get(aRuleContext.getRuleIndex()));
+	    return true;
+	  }
+	  return false;
+	}
+	
+	/**
+	 * Determine some string representation for the given node and append it to
+	 * the parse tree buffer.
 	 *
 	 * @param t The sub-tree whose current node needs a string representation.
 	 */
-	protected String getNodeText(@NotNull Tree t) {
+	protected void appendNodeText(@NotNull Tree t) {
 		if ( ruleNames!=null ) {
 			if ( t instanceof RuleNode ) {
-				int ruleIndex = ((RuleNode)t).getRuleContext().getRuleIndex();
-				String ruleName = ruleNames.get(ruleIndex);
-				return ruleName;
+				if (appendRule(((RuleNode)t).getRuleContext())) return;
 			}
-			else if ( t instanceof ErrorNode) {
-				return t.toString();
+			if ( t instanceof ErrorNode) {
+			  buf.append("ERROR: ");
+			  appendToken(((ErrorNode)t).getSymbol());
+			  return;
 			}
-			else if ( t instanceof TerminalNode) {
-				Token symbol = ((TerminalNode)t).getSymbol();
-				if (symbol != null) {
-					String s = symbol.getText();
-					return s;
-				}
+			if ( t instanceof TerminalNode) {
+				if (appendToken(((TerminalNode)t).getSymbol())) return;
 			}
 		}
 		// no recog for rule names
 		Object payload = t.getPayload();
 		if ( payload instanceof Token ) {
-			return ((Token)payload).getText();
+		  if (appendToken((Token)payload)) return;
 		}
-		return payload.toString();
+		if ( payload instanceof RuleContext ) {
+		  if (appendRule((RuleContext)payload)) return;
+		}
+		String s = Utils.escapeWhitespace(payload.toString(), false);
+		buf.append("unknown payload <<");
+    buf.append(s);
+    buf.append(">>");
 	}
 
 	/**
@@ -142,8 +202,17 @@ public class TreePrinter {
 	 * @param recog          The lexer/parser used to obtain the rule names to be
 	 *                       printed in the printTree output.
 	 */
-	public TreePrinter(@Nullable String anIndentAmount, @Nullable Parser recog) {
-	  if (anIndentAmount != null) indentAmount = anIndentAmount;
+	public TreePrinter(@Nullable String aPrimaryIndentAmount,
+	                   @Nullable String aSecondaryIndentAmount,
+	                   int anIndentCyclePeriod,
+	                   @Nullable Parser recog) {
+	  if (aPrimaryIndentAmount != null)   primaryIndentAmount   = aPrimaryIndentAmount;
+	  if (aSecondaryIndentAmount != null) secondaryIndentAmount = aSecondaryIndentAmount;
+	  if (0 < anIndentCyclePeriod) {
+	    indentCyclePeriod = anIndentCyclePeriod;
+	    indentCycleLength = primaryIndentAmount.length() * (indentCyclePeriod - 1) + 
+	      secondaryIndentAmount.length();
+	  }
 		String[] ruleNamesArray = (recog != null) ? recog.getRuleNames() : null;
 		ruleNames = (ruleNamesArray != null) ? Arrays.asList(ruleNamesArray) : null;
 

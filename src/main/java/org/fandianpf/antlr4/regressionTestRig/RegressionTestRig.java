@@ -101,6 +101,15 @@ public class RegressionTestRig {
 	/** Option: Whether or not to print the parse tree. Default: false */ 
 	protected boolean printTree = false;
 	
+	/** Option: The primary indent string for the TreePrinter. */
+	protected String primaryIndentStr = ". ";
+	
+	/** Option: The secondary indent string for the TreePrinter. */
+	protected String secondaryIndentStr = ", ";
+	
+	/** Option: The indent cycle period for the TreePrinter. */
+	protected int indentCyclePeriod = 5;
+	
 	/** Option: Whether or not to show lexer tokens. Default: false */
 	protected boolean showTokens = false;
 	
@@ -199,6 +208,9 @@ public class RegressionTestRig {
 			System.err.println("java org.fandianpf.antlr4.RegressionTestRig GrammarName startRuleName\n" +
 							   "  [-tokens] [-tree] [-encoding encodingname]\n"+
 							   "  [-trace] [-diagnostics] [-SLL]\n"+
+							   "  [-primaryIndent primaryIndentString ]\n"+
+							   "  [-secondaryIndent secondaryIndentString ]\n"+
+							   "  [-indentCycle indentCyclePeriod ]\n"+
 							   "  [-metrics metricsTablePath]\n"+
 							   "  [-sourceDir aSourceDirPath]\n"+
 							   "  [-outputDir anOutputDirPath]\n"+
@@ -229,6 +241,30 @@ public class RegressionTestRig {
 				SLL = true;
 			}	else if ( arg.equals("-diagnostics") ) {
 				diagnostics = true;
+		  } else if ( arg.equals("-primaryIndent") ) {
+		    if ( i>=args.length ) {
+		      System.err.println("ERROR: missing primaryIndentString on -primaryIndent");
+		    }
+		    primaryIndentStr = args[i];
+		    i++;
+		  } else if ( arg.equals("-secondaryIndent") ) {
+		    if ( i>=args.length ) {
+		      System.err.println("ERROR: missing secondaryIndentString on -secondaryIndent");
+		    }
+		    secondaryIndentStr = args[i];
+		    i++;
+		  } else if ( arg.equals("-indentCycle") ) {
+		    if ( i>=args.length ) {
+		      System.err.println("ERROR: missing indentCyclePeriod on -indentCycle");
+		    }
+		    try {
+		      indentCyclePeriod = Integer.valueOf(args[i]);
+		    } catch (Exception exp) {
+		      System.err.println("WARNING: incorrectly formated indentCyclePeriod ["+args[i]+"]");
+		      System.err.println("         using the value "+Integer.toString(indentCyclePeriod));
+		      indentCyclePeriod = 5;
+		    }
+		    i++;
 			} else if ( arg.equals("-encoding") ) {
 				if ( i>=args.length ) {
 					System.err.println("ERROR: missing encoding on -encoding");
@@ -351,7 +387,10 @@ public class RegressionTestRig {
 
 			if ( printTree ) {
 				parser.setBuildParseTree(true);
-  			treePrinter = new TreePrinter("  ", parser);
+  			treePrinter = new TreePrinter(primaryIndentStr,
+  			                              secondaryIndentStr,
+  			                              indentCyclePeriod,
+  			                              parser);
 			}
 
 			if ( SLL ) { // overrides diagnostics
@@ -523,22 +562,23 @@ public class RegressionTestRig {
 	 	metricsResults.metric[Metrics.LEXER_TIMINGS] = 
 	 	  afterMilliSeconds - beforeMilliSeconds;
  	  
+	 	// Count the number of tokens for the metrics and showTokens output.
 	 	Long numTokens = 0L;
-	  if ( showTokens ) {
+    for (Object tok : tokens.getTokens()) {
+  		numTokens++;
+		}
+    metricsResults.metric[Metrics.LEXER_NUM_TOKENS] = numTokens;
+		
+	  if ( showTokens ) {   		
    		writer.println(PRINT_STREAM_BAR);
-   		writer.println("Lexer token stream");
+   		writer.print("Lexer token stream; num tokens: ");
+   		writer.println(Long.toString(numTokens));
    		writer.println(PRINT_STREAM_BAR);
     		
 		  for (Object tok : tokens.getTokens()) {
    			writer.println(tok);
-   			numTokens++;
-	 		}
-	  } else {
-		  for (Object tok : tokens.getTokens()) {
-   			numTokens++;
 	 		}
 	  }
-    metricsResults.metric[Metrics.LEXER_NUM_TOKENS] = numTokens;
 	  
 	  metricsResults.metric[Metrics.LEXER_ERRORS] = 
 	    psErrorListener.getNumberOfSyntaxErrors();
@@ -568,18 +608,21 @@ public class RegressionTestRig {
   		ParserRuleContext tree = (ParserRuleContext)startRule.invoke(parser, (Object[])null);
 	 	  afterMilliSeconds  = System.currentTimeMillis();
 	 	  metricsResults.metric[Metrics.PARSER_TIMINGS] = afterMilliSeconds - beforeMilliSeconds;
-	  	  
-	 		if ( printTree ) {
-     		writer.println(PRINT_STREAM_BAR);
-     		writer.println("Parser parse tree");
-     		writer.println(PRINT_STREAM_BAR);
-	  		writer.println(treePrinter.printTree(tree));
-		  }
-		  
+
 		  TreeCounter treeCounter = new TreeCounter();
 		  treeCounter.countTree(tree);
 		  metricsResults.metric[Metrics.PARSER_DEPTH] = treeCounter.getTreeDepth();
 		  metricsResults.metric[Metrics.PARSER_NUM_NODES] = treeCounter.getNumberOfNodes();
+	 	  
+	 		if ( printTree ) {
+     		writer.println(PRINT_STREAM_BAR);
+     		writer.print("Parser parse tree; num nodes: ");
+     		writer.print(Long.toString(treeCounter.getNumberOfNodes()));
+     		writer.print(", tree depth: ");
+     		writer.println(Long.toString(treeCounter.getTreeDepth()));
+     		writer.println(PRINT_STREAM_BAR);
+	  		writer.println(treePrinter.printTree(tree));
+		  }
 		  
   	}	catch (Exception nsme) {
 	 		System.err.println("ERROR: No method for rule "+startRuleName+" or it has arguments");
